@@ -5,6 +5,7 @@ export interface Column {
   isPrimaryKey: boolean;
   isForeignKey: boolean;
   isNullable: boolean;
+  length?: string;
 }
 
 export interface TableData extends Record<string, unknown> {

@@ -8,6 +8,7 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
 });
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const metadata: Metadata = {
   title: "AI-Visual Database Architect",
   description: "Design database schemas with AI assistance",

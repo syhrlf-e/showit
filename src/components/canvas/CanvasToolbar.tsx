@@ -6,16 +6,56 @@ import {
   Maximize,
   Grid,
   Moon,
-  Download,
   LayoutTemplate,
+  Plus,
+  Sun,
 } from "lucide-react";
 import { useReactFlow } from "@xyflow/react";
+import { useERDStore } from "@/store/erdStore";
+import { clsx } from "clsx";
 
 export function CanvasToolbar() {
   const { zoomIn, zoomOut, fitView } = useReactFlow();
+  const addNode = useERDStore((state) => state.addNode);
+  const layoutNodes = useERDStore((state) => state.layoutNodes);
+  const toggleGrid = useERDStore((state) => state.toggleGrid);
+  const showGrid = useERDStore((state) => state.showGrid);
+  const theme = useERDStore((state) => state.theme);
+  const toggleTheme = useERDStore((state) => state.toggleTheme);
+
+  const handleAddTable = () => {
+    const id = crypto.randomUUID();
+    addNode({
+      id,
+      type: "table",
+      position: { x: 100 + Math.random() * 100, y: 100 + Math.random() * 100 },
+      data: {
+        label: "New Table",
+        columns: [
+          {
+            id: crypto.randomUUID(),
+            name: "id",
+            type: "uuid",
+            isPrimaryKey: true,
+            isForeignKey: false,
+            isNullable: false,
+          },
+        ],
+      },
+    });
+  };
 
   return (
     <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-1 p-1 bg-card/80 backdrop-blur border border-border rounded-lg shadow-sm z-10">
+      <button
+        onClick={handleAddTable}
+        className="flex items-center gap-2 px-3 py-1.5 bg-primary text-white hover:bg-primary/90 rounded-md text-xs font-medium transition-colors mr-2"
+        title="Add New Table"
+      >
+        <Plus className="w-3.5 h-3.5" />
+        Add Table
+      </button>
+      <div className="w-px h-4 bg-border mx-1" />
       <button
         onClick={() => zoomIn()}
         className="p-2 hover:bg-white/5 rounded-md text-text-secondary hover:text-text-primary transition-colors"
@@ -39,29 +79,34 @@ export function CanvasToolbar() {
       </button>
       <div className="w-px h-4 bg-border mx-1" />
       <button
+        onClick={layoutNodes}
         className="p-2 hover:bg-white/5 rounded-md text-text-secondary hover:text-text-primary transition-colors"
         title="Auto Layout"
       >
         <LayoutTemplate className="w-4 h-4" />
       </button>
       <button
-        className="p-2 hover:bg-white/5 rounded-md text-text-secondary hover:text-text-primary transition-colors"
+        onClick={toggleGrid}
+        className={clsx(
+          "p-2 rounded-md transition-colors",
+          showGrid
+            ? "bg-primary/20 text-primary"
+            : "hover:bg-white/5 text-text-secondary hover:text-text-primary",
+        )}
         title="Toggle Grid"
       >
         <Grid className="w-4 h-4" />
       </button>
-      <div className="w-px h-4 bg-border mx-1" />
       <button
+        onClick={toggleTheme}
         className="p-2 hover:bg-white/5 rounded-md text-text-secondary hover:text-text-primary transition-colors"
         title="Toggle Theme"
       >
-        <Moon className="w-4 h-4" />
-      </button>
-      <button
-        className="p-2 hover:bg-white/5 rounded-md text-text-secondary hover:text-text-primary transition-colors"
-        title="Export"
-      >
-        <Download className="w-4 h-4" />
+        {theme === "dark" ? (
+          <Moon className="w-4 h-4" />
+        ) : (
+          <Sun className="w-4 h-4" />
+        )}
       </button>
     </div>
   );

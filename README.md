@@ -1,73 +1,149 @@
-# React + TypeScript + Vite
+# AI-Visual Database Architect
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 📋 Deskripsi Sistem
 
-Currently, two official plugins are available:
+**AI-Visual Database Architect** adalah aplikasi web interaktif untuk mendesain dan memvisualisasikan skema database secara visual menggunakan diagram Entity-Relationship (ERD). Aplikasi ini memungkinkan pengguna membuat, mengedit, dan mengekspor struktur database dengan antarmuka drag-and-drop yang intuitif.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🎯 Fitur Utama
 
-## React Compiler
+### 1. **Visual ERD Canvas**
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Drag-and-drop tabel dengan koneksi antar-entitas
+- Zoom, pan, dan auto-layout untuk organisasi diagram
+- Grid toggle untuk presisi penempatan
+- Handle koneksi di 4 sisi (top, bottom, left, right)
 
-## Expanding the ESLint configuration
+### 2. **Manajemen Tabel & Kolom**
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- Tambah/hapus tabel dan kolom secara dinamis
+- Edit nama tabel dan kolom dengan double-click
+- Dropdown tipe data SQL dengan tooltip deskripsi
+- Input panjang data (contoh: `VARCHAR(255)`)
+- Toggle Primary Key dan Foreign Key
+- Atur nullable/not null per kolom
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### 3. **AI-Assisted Generation** _(Simulasi)_
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- Input prompt untuk generate skema otomatis
+- Template preset (blog, e-commerce, dll)
+- History prompt dengan timestamp
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 4. **Export & Persistence**
+
+- **Export SQL**: Generate `CREATE TABLE` statements
+- **Export Image**: Download diagram sebagai PNG
+- **Auto-save**: State tersimpan di localStorage
+
+### 5. **Theme & UX**
+
+- Dark/Light mode toggle (default: Dark)
+- Animasi smooth dengan Framer Motion
+- Responsive design dengan Tailwind CSS
+
+## 🛠️ Tech Stack
+
+| Layer                | Teknologi                           |
+| -------------------- | ----------------------------------- |
+| **Framework**        | Next.js 15 (App Router)             |
+| **UI Library**       | React 18, TypeScript                |
+| **Styling**          | Tailwind CSS                        |
+| **State Management** | Zustand (dengan persist middleware) |
+| **Canvas**           | React Flow (@xyflow/react)          |
+| **Icons**            | Lucide React                        |
+| **Components**       | Radix UI (Dropdown, Tooltip)        |
+| **Animation**        | Framer Motion                       |
+| **Layout**           | Dagre (auto-layout)                 |
+| **Export**           | html-to-image                       |
+
+## 📁 Struktur Proyek
+
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── layout.tsx         # Root layout
+│   ├── page.tsx           # Homepage
+│   └── globals.css        # Global styles
+├── components/
+│   ├── canvas/
+│   │   ├── ERDCanvas.tsx      # React Flow canvas
+│   │   ├── TableNode.tsx      # Custom table node
+│   │   ├── RelationshipEdge.tsx
+│   │   └── CanvasToolbar.tsx  # Floating toolbar
+│   ├── layout/
+│   │   └── Header.tsx         # Top header (export, login)
+│   └── sidebar/
+│       ├── AIPanel.tsx        # AI prompt input
+│       └── HistoryPanel.tsx   # Prompt history
+├── store/
+│   └── erdStore.ts        # Zustand state management
+├── types/
+│   └── erd.ts             # TypeScript interfaces
+├── constants/
+│   └── dataTypes.ts       # SQL data types list
+└── utils/
+    └── sqlGenerator.ts    # SQL export logic
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🚀 Cara Menjalankan
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```bash
+# Install dependencies
+npm install
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Development mode
+npm run dev
+
+# Production build
+npm run build
+npm start
 ```
+
+Akses aplikasi di `http://localhost:3000`
+
+## 💾 Data Model
+
+### Column Interface
+
+```typescript
+{
+  id: string;
+  name: string;
+  type: string;           // varchar, int, uuid, dll
+  length?: string;        // 255, 10,2, dll
+  isPrimaryKey: boolean;
+  isForeignKey: boolean;
+  isNullable: boolean;
+}
+```
+
+### TableData Interface
+
+```typescript
+{
+  label: string;          // Nama tabel
+  columns: Column[];
+}
+```
+
+## 🎨 Design Highlights
+
+- **Modern UI**: Glassmorphism, gradient accents, smooth transitions
+- **Dark-first**: Optimized untuk dark mode dengan light mode support
+- **Premium Feel**: Micro-animations, hover effects, shadow layers
+- **Accessibility**: Keyboard shortcuts, tooltips, semantic HTML
+
+## 📝 Catatan Pengembangan
+
+- **AI Generation**: Saat ini masih simulasi (template-based), bisa diintegrasikan dengan LLM API
+- **Collaboration**: Belum ada fitur real-time collaboration
+- **Authentication**: Login button masih placeholder
+- **Cloud Sync**: Data hanya tersimpan di localStorage
+
+## 📄 Lisensi
+
+Project ini dibuat untuk keperluan pembelajaran dan pengembangan.
+
+---
+
+**Versi**: 1.0.0  
+**Terakhir diupdate**: Februari 2026

@@ -5,15 +5,203 @@ import { Sparkles, FileCode, MessageSquare } from "lucide-react";
 import { clsx } from "clsx";
 import { LoadingDots } from "../ui/LoadingDots";
 
+import { useERDStore } from "@/store/erdStore";
+
 export function InputSection() {
   const [mode, setMode] = useState<"natural" | "sql">("natural");
   const [input, setInput] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
+  const isGenerating = useERDStore((state) => state.isGenerating);
+  const setIsGenerating = useERDStore((state) => state.setIsGenerating);
+  const addToHistory = useERDStore((state) => state.addToHistory);
+  const addNode = useERDStore((state) => state.addNode);
 
   const handleGenerate = () => {
+    if (!input.trim()) return;
+
     setIsGenerating(true);
-    // Simulate generation
-    setTimeout(() => setIsGenerating(false), 2000);
+
+    // Simulate API delay
+    setTimeout(() => {
+      const prompt = input.toLowerCase();
+
+      if (prompt.includes("blog")) {
+        // Add Blog Schema
+        addNode({
+          id: crypto.randomUUID(),
+          type: "table",
+          position: { x: Math.random() * 500, y: Math.random() * 500 },
+          data: {
+            label: "Posts",
+            columns: [
+              {
+                id: crypto.randomUUID(),
+                name: "id",
+                type: "uuid",
+                isPrimaryKey: true,
+                isForeignKey: false,
+                isNullable: false,
+              },
+              {
+                id: crypto.randomUUID(),
+                name: "title",
+                type: "varchar",
+                isPrimaryKey: false,
+                isForeignKey: false,
+                isNullable: false,
+              },
+              {
+                id: crypto.randomUUID(),
+                name: "content",
+                type: "text",
+                isPrimaryKey: false,
+                isForeignKey: false,
+                isNullable: true,
+              },
+            ],
+          },
+        });
+        addNode({
+          id: crypto.randomUUID(),
+          type: "table",
+          position: { x: Math.random() * 500, y: Math.random() * 500 },
+          data: {
+            label: "Comments",
+            columns: [
+              {
+                id: crypto.randomUUID(),
+                name: "id",
+                type: "uuid",
+                isPrimaryKey: true,
+                isForeignKey: false,
+                isNullable: false,
+              },
+              {
+                id: crypto.randomUUID(),
+                name: "post_id",
+                type: "uuid",
+                isPrimaryKey: false,
+                isForeignKey: true,
+                isNullable: false,
+              },
+              {
+                id: crypto.randomUUID(),
+                name: "body",
+                type: "text",
+                isPrimaryKey: false,
+                isForeignKey: false,
+                isNullable: false,
+              },
+            ],
+          },
+        });
+      } else if (prompt.includes("ecommerce") || prompt.includes("shop")) {
+        // Add E-commerce Schema
+        addNode({
+          id: crypto.randomUUID(),
+          type: "table",
+          position: { x: Math.random() * 500, y: Math.random() * 500 },
+          data: {
+            label: "Products",
+            columns: [
+              {
+                id: crypto.randomUUID(),
+                name: "id",
+                type: "uuid",
+                isPrimaryKey: true,
+                isForeignKey: false,
+                isNullable: false,
+              },
+              {
+                id: crypto.randomUUID(),
+                name: "name",
+                type: "varchar",
+                isPrimaryKey: false,
+                isForeignKey: false,
+                isNullable: false,
+              },
+              {
+                id: crypto.randomUUID(),
+                name: "price",
+                type: "decimal",
+                isPrimaryKey: false,
+                isForeignKey: false,
+                isNullable: false,
+              },
+            ],
+          },
+        });
+        addNode({
+          id: crypto.randomUUID(),
+          type: "table",
+          position: { x: Math.random() * 500, y: Math.random() * 500 },
+          data: {
+            label: "Orders",
+            columns: [
+              {
+                id: crypto.randomUUID(),
+                name: "id",
+                type: "uuid",
+                isPrimaryKey: true,
+                isForeignKey: false,
+                isNullable: false,
+              },
+              {
+                id: crypto.randomUUID(),
+                name: "user_id",
+                type: "uuid",
+                isPrimaryKey: false,
+                isForeignKey: true,
+                isNullable: false,
+              },
+              {
+                id: crypto.randomUUID(),
+                name: "total",
+                type: "decimal",
+                isPrimaryKey: false,
+                isForeignKey: false,
+                isNullable: false,
+              },
+            ],
+          },
+        });
+      } else {
+        // Generic Fallback
+        addNode({
+          id: crypto.randomUUID(),
+          type: "table",
+          position: { x: Math.random() * 500, y: Math.random() * 500 },
+          data: {
+            label: "AI_Generated_Table",
+            columns: [
+              {
+                id: crypto.randomUUID(),
+                name: "id",
+                type: "uuid",
+                isPrimaryKey: true,
+                isForeignKey: false,
+                isNullable: false,
+              },
+              {
+                id: crypto.randomUUID(),
+                name: "name",
+                type: "varchar",
+                isPrimaryKey: false,
+                isForeignKey: false,
+                isNullable: true,
+              },
+            ],
+          },
+        });
+      }
+
+      addToHistory({
+        id: crypto.randomUUID(),
+        prompt: input,
+        timestamp: Date.now(),
+      });
+      setIsGenerating(false);
+      setInput("");
+    }, 1500);
   };
 
   return (
