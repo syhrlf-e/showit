@@ -12,7 +12,12 @@ import {
   addEdge,
   MarkerType,
 } from "@xyflow/react";
-import { type TableData, type Column, type ChatMessage } from "../types/erd";
+import {
+  type TableData,
+  type Column,
+  type ChatMessage,
+  type ChatSession,
+} from "../types/erd";
 import dagre from "dagre";
 import { parseSQLToERD } from "@/utils/sqlParser";
 import { DEFAULT_NODES, DEFAULT_EDGES } from "@/constants/defaults";
@@ -39,6 +44,16 @@ interface ERDState {
   messages: ChatMessage[];
   addMessage: (message: ChatMessage) => void;
   setMessages: (messages: ChatMessage[]) => void;
+
+  // Chat Session Management
+  currentView: "history" | "chat";
+  setCurrentView: (view: "history" | "chat") => void;
+  currentChatId: string | null;
+  sessions: ChatSession[];
+  createNewChat: () => void;
+  loadSession: (sessionId: string) => void;
+  deleteSession: (sessionId: string) => void;
+
   isGenerating: boolean;
   setIsGenerating: (isGenerating: boolean) => void;
   layoutNodes: () => void;
@@ -51,6 +66,7 @@ interface ERDState {
   sqlCode: string;
   setSqlCode: (code: string) => void;
   importSQL: (sql: string) => void;
+  syncSQL: (sql: string) => void;
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
 }
@@ -59,9 +75,114 @@ export const useERDStore = create<ERDState>()(
   persist(
     (set, get) => ({
       messages: [],
+      currentView: "history",
+      setCurrentView: (view) => set({ currentView: view }),
+      currentChatId: null,
+      sessions: [],
+
+      createNewChat: () => {
+        const newSessionId = crypto.randomUUID();
+        const newSession: ChatSession = {
+          id: newSessionId,
+          title: "New Chat",
+          timestamp: Date.now(),
+          preview: "Empty conversation",
+          messages: [],
+        };
+        set((state) => ({
+          sessions: [newSession, ...state.sessions],
+          currentChatId: newSessionId,
+          messages: [],
+          nodes: [], // Clear canvas
+          edges: [], // Clear canvas
+          currentView: "chat",
+        }));
+      },
+
+      loadSession: (sessionId) => {
+        const session = get().sessions.find((s) => s.id === sessionId);
+        if (session) {
+          set({
+            currentChatId: sessionId,
+            messages: session.messages,
+            currentView: "chat",
+          });
+        }
+      },
+
+      deleteSession: (sessionId) => {
+        set((state) => ({
+          sessions: state.sessions.filter((s) => s.id !== sessionId),
+          currentChatId:
+            state.currentChatId === sessionId ? null : state.currentChatId,
+          messages: state.currentChatId === sessionId ? [] : state.messages,
+          currentView:
+            state.currentChatId === sessionId ? "history" : state.currentView,
+        }));
+      },
+
       isGenerating: false,
-      addMessage: (message) => set({ messages: [...get().messages, message] }),
-      setMessages: (messages) => set({ messages }),
+
+      addMessage: (message) => {
+        const state = get();
+        let chatId = state.currentChatId;
+        let newSessions = [...state.sessions];
+
+        if (!chatId) {
+          // Auto-create session if sending message without active chat
+          chatId = crypto.randomUUID();
+          const newSession: ChatSession = {
+            id: chatId,
+            title: message.content.slice(0, 30) || "New Chat",
+            timestamp: Date.now(),
+            preview: message.content.slice(0, 50),
+            messages: [message],
+          };
+          newSessions = [newSession, ...newSessions];
+        } else {
+          // Update existing session
+          newSessions = newSessions.map((session) => {
+            if (session.id === chatId) {
+              return {
+                ...session,
+                messages: [...session.messages, message],
+                preview: message.content.slice(0, 50),
+                timestamp: Date.now(),
+                // Update title based on first user message if it's "New Chat"
+                title:
+                  session.title === "New Chat" && message.role === "user"
+                    ? message.content.slice(0, 30)
+                    : session.title,
+              };
+            }
+            return session;
+          });
+        }
+
+        set({
+          sessions: newSessions,
+          currentChatId: chatId,
+          messages:
+            chatId === state.currentChatId
+              ? [...state.messages, message]
+              : state.messages,
+        });
+      },
+
+      setMessages: (messages) => {
+        const chatId = get().currentChatId;
+        if (chatId) {
+          set((state) => ({
+            messages,
+            sessions: state.sessions.map((s) =>
+              s.id === chatId ? { ...s, messages } : s,
+            ),
+          }));
+        } else {
+          set({ messages });
+        }
+      },
+
       setIsGenerating: (isGenerating) => set({ isGenerating }),
       nodes: DEFAULT_NODES,
       edges: DEFAULT_EDGES,
@@ -279,6 +400,56 @@ export const useERDStore = create<ERDState>()(
           console.error("Import Error:", error);
           toast.error("Failed to import SQL");
           set({ isGenerating: false });
+        }
+      },
+      syncSQL: (sql) => {
+        try {
+          const { nodes: newNodes, edges: newEdges } = parseSQLToERD(sql);
+
+          if (newNodes.length === 0 && sql.trim() === "") {
+            set({ nodes: [], edges: [] });
+            return;
+          }
+
+          const currentNodes = get().nodes;
+
+          // Merged Nodes Logic
+          const nextNodes = [...currentNodes];
+
+          // 1. Update Existing & Add New
+          newNodes.forEach((newNode) => {
+            const index = nextNodes.findIndex(
+              (n) => n.data.label === newNode.data.label,
+            );
+
+            if (index !== -1) {
+              // Update existing node (preserve ID and Position)
+              nextNodes[index] = {
+                ...nextNodes[index],
+                data: {
+                  ...nextNodes[index].data,
+                  columns: newNode.data.columns,
+                },
+              };
+            } else {
+              // Add new node
+              nextNodes.push(newNode);
+            }
+          });
+
+          // 2. Remove Deleted Nodes
+          const finalNodes = nextNodes.filter((n) =>
+            newNodes.some((newNode) => newNode.data.label === n.data.label),
+          );
+
+          set({
+            nodes: finalNodes,
+            edges: newEdges,
+          });
+        } catch (error) {
+          // Suppress syntax errors during typing as they are expected.
+          // We could add a state 'isSyntaxError' to the store if we want to show UI feedback.
+          // For now, just silently fail to sync, keeping the old valid state.
         }
       },
       sidebarOpen: true,

@@ -10,13 +10,14 @@ interface MainLayoutProps {
 
 export function MainLayout({ children, sidebar }: MainLayoutProps) {
   return (
-    <div className="h-screen w-screen flex flex-col bg-background text-text-primary overflow-hidden">
-      <Header />
-      <div className="flex-1 flex overflow-hidden min-h-0">
-        <div className="h-full flex-shrink-0 relative group border-r border-border">
-          {sidebar}
-        </div>
-        <main className="flex-1 h-full relative overflow-hidden min-w-0">
+    <div className="h-screen w-screen flex bg-background text-text-primary overflow-hidden">
+      {/* Sidebar - Full Height */}
+      <div className="h-full flex-shrink-0 relative z-50">{sidebar}</div>
+
+      {/* Main Content - Header + Canvas */}
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <Header />
+        <main className="flex-1 h-full relative overflow-hidden">
           {children}
         </main>
       </div>

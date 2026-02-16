@@ -51,7 +51,7 @@ export function ERDCanvas() {
         maxZoom={2}
       >
         {useERDStore((state) => state.showGrid) && (
-          <Background gap={20} size={1} color="#555" />
+          <Background gap={20} size={1} color="#555" style={{ opacity: 0.5 }} />
         )}
         <CanvasToolbar />
       </ReactFlow>

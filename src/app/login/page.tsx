@@ -12,7 +12,9 @@ export default function LoginPage() {
           <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
             <LogIn className="w-6 h-6 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">Welcome to VIDA</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Welcome to Showit
+          </h1>
           <p className="text-text-secondary text-sm">
             Sign in to save your diagrams and access advanced features.
           </p>

@@ -20,3 +20,11 @@ export interface ChatMessage {
   content: string;
   timestamp: number;
 }
+
+export interface ChatSession {
+  id: string;
+  title: string;
+  timestamp: number;
+  preview: string;
+  messages: ChatMessage[];
+}

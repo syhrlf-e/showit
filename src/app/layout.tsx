@@ -11,7 +11,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "VIDA - Visual Database Architect",
+  title: "ShowIt - Visual Database Architect",
   description: "Design database schemas with AI assistance",
 };
 
