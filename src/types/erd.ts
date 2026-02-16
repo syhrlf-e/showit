@@ -13,3 +13,10 @@ export interface TableData extends Record<string, unknown> {
   columns: Column[];
   animationDelay?: number;
 }
+
+export interface ChatMessage {
+  id: string;
+  role: "user" | "system";
+  content: string;
+  timestamp: number;
+}

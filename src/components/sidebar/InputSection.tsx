@@ -7,82 +7,16 @@ import { LoadingDots } from "@/components/ui/LoadingDots";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 
 import { useERDStore } from "@/store/erdStore";
+import { useAIGenerate } from "@/hooks/useAIGenerate";
 
 export function InputSection() {
   const [mode, setMode] = useState<"natural" | "sql">("natural");
   const [input, setInput] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const isGenerating = useERDStore((state) => state.isGenerating);
-  const setIsGenerating = useERDStore((state) => state.setIsGenerating);
-  const addMessage = useERDStore((state) => state.addMessage);
-  const importSQL = useERDStore((state) => state.importSQL);
   const setSidebarOpen = useERDStore((state) => state.setSidebarOpen);
+  const { generate, error, isGenerating, setError } = useAIGenerate();
 
   const handleGenerate = async () => {
-    if (!input.trim()) return;
-
-    addMessage({
-      id: crypto.randomUUID(),
-      role: "user",
-      content: input,
-      timestamp: Date.now(),
-    });
-
-    setIsGenerating(true);
-    setError(null);
-
-    try {
-      if (mode === "sql") {
-        importSQL(input);
-        addMessage({
-          id: crypto.randomUUID(),
-          role: "system",
-          content: "Imported SQL successfully.",
-          timestamp: Date.now(),
-        });
-        setInput("");
-      } else {
-        const response = await fetch("/api/ai/generate", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ prompt: input }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || "Failed to generate SQL");
-        }
-
-        const generatedSQL = data.sql;
-        importSQL(generatedSQL);
-
-        addMessage({
-          id: crypto.randomUUID(),
-          role: "system",
-          content: "Generated tables based on your request.",
-          timestamp: Date.now(),
-        });
-
-        setInput("");
-      }
-    } catch (err: unknown) {
-      console.error("Generation Error:", err);
-      const errorMessage =
-        err instanceof Error ? err.message : "Something went wrong.";
-      setError(errorMessage);
-
-      addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content: `Error: ${errorMessage}`,
-        timestamp: Date.now(),
-      });
-    } finally {
-      setIsGenerating(false);
-    }
+    await generate(input, mode, () => setInput(""));
   };
 
   return (

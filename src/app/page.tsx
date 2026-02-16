@@ -3,11 +3,14 @@
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { SplitView } from "@/components/layout/SplitView";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 
 export default function Home() {
   return (
-    <MainLayout sidebar={<Sidebar />}>
-      <SplitView />
-    </MainLayout>
+    <ErrorBoundary>
+      <MainLayout sidebar={<Sidebar />}>
+        <SplitView />
+      </MainLayout>
+    </ErrorBoundary>
   );
 }

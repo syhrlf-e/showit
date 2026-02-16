@@ -30,12 +30,14 @@ export const RelationshipEdge = memo(
       targetPosition,
     });
 
-    const baseColor =
-      data?.type === "1:1"
-        ? "#3b82f6"
-        : data?.type === "1:N"
-          ? "#10b981"
-          : "#a855f7";
+    const EDGE_COLORS = {
+      "1:1": "var(--color-primary, #3b82f6)",
+      "1:N": "var(--color-success, #10b981)",
+      "N:M": "#a855f7",
+    } as const;
+
+    const edgeType = (data?.type as keyof typeof EDGE_COLORS) || "N:M";
+    const baseColor = EDGE_COLORS[edgeType];
     const strokeColor = selected ? "#ffffff" : baseColor;
     const strokeWidth = selected ? 3 : 2;
 
@@ -67,3 +69,5 @@ export const RelationshipEdge = memo(
     );
   },
 );
+
+RelationshipEdge.displayName = "RelationshipEdge";

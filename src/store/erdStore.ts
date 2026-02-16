@@ -12,10 +12,10 @@ import {
   addEdge,
   MarkerType,
 } from "@xyflow/react";
-import { type TableData, type Column } from "../types/erd";
+import { type TableData, type Column, type ChatMessage } from "../types/erd";
 import dagre from "dagre";
 import { parseSQLToERD } from "@/utils/sqlParser";
-import { DEFAULT_NODES, DEFAULT_EDGES } from "@/lib/constants";
+import { DEFAULT_NODES, DEFAULT_EDGES } from "@/constants/defaults";
 import { toast } from "sonner";
 
 interface ERDState {
@@ -34,26 +34,9 @@ interface ERDState {
     data: Partial<Column>,
   ) => void;
   removeColumn: (nodeId: string, columnId: string) => void;
-  messages: {
-    id: string;
-    role: "user" | "system";
-    content: string;
-    timestamp: number;
-  }[];
-  addMessage: (message: {
-    id: string;
-    role: "user" | "system";
-    content: string;
-    timestamp: number;
-  }) => void;
-  setMessages: (
-    messages: {
-      id: string;
-      role: "user" | "system";
-      content: string;
-      timestamp: number;
-    }[],
-  ) => void;
+  messages: ChatMessage[];
+  addMessage: (message: ChatMessage) => void;
+  setMessages: (messages: ChatMessage[]) => void;
   isGenerating: boolean;
   setIsGenerating: (isGenerating: boolean) => void;
   layoutNodes: () => void;

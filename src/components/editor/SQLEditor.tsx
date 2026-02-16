@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
 import { useERDStore } from "@/store/erdStore";
@@ -10,25 +10,17 @@ import { Play } from "lucide-react";
 export function SQLEditor() {
   const nodes = useERDStore((state) => state.nodes);
   const edges = useERDStore((state) => state.edges);
-  const sqlCode = useERDStore((state) => state.sqlCode);
-  const setSqlCode = useERDStore((state) => state.setSqlCode);
   const theme = useERDStore((state) => state.theme);
   const importSQL = useERDStore((state) => state.importSQL);
 
-  const [localCode, setLocalCode] = useState(sqlCode);
+  const generatedSQL = useMemo(() => generateSQL(nodes, edges), [nodes, edges]);
+  const [localCode, setLocalCode] = useState<string | null>(null);
 
-  useEffect(() => {
-    const generated = generateSQL(nodes, edges);
-    if (!sqlCode || sqlCode !== generated) {
-      setLocalCode(generated);
-      if (sqlCode !== generated) {
-        setSqlCode(generated);
-      }
-    }
-  }, [nodes, edges, setSqlCode]);
+  const displayCode = localCode ?? generatedSQL;
 
   const handleApply = () => {
-    importSQL(localCode);
+    importSQL(displayCode);
+    setLocalCode(null);
   };
 
   return (
@@ -47,13 +39,12 @@ export function SQLEditor() {
       </div>
       <div className="flex-1 overflow-auto">
         <CodeMirror
-          value={localCode}
+          value={displayCode}
           height="100%"
           theme={theme === "dark" ? "dark" : "light"}
           extensions={[sql()]}
           onChange={(value) => {
             setLocalCode(value);
-            setSqlCode(value);
           }}
           className="text-base"
         />

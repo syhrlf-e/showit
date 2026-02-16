@@ -23,6 +23,7 @@ export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const { data: session } = useSession();
   const setMessages = useERDStore((state) => state.setMessages);
+  const messages = useERDStore((state) => state.messages);
 
   const handleNewChat = () => {
     setMessages([]);
@@ -95,31 +96,47 @@ export function Sidebar() {
                 isCollapsed && "text-center",
               )}
             >
-              {isCollapsed ? "•" : "Today"}
+              {isCollapsed ? "•" : "Recent"}
             </div>
-            {[1, 2, 3].map((i) => (
+            {messages.length === 0 ? (
               <div
-                key={i}
-                className="px-2"
-                title={isCollapsed ? `Session ${i}` : undefined}
+                className={clsx(
+                  "px-3 py-2 text-xs text-text-secondary/40",
+                  isCollapsed && "text-center",
+                )}
               >
-                <button
-                  className={clsx(
-                    "w-full flex items-center gap-3 p-2 rounded-lg text-text-secondary hover:bg-white/5 hover:text-text-primary transition-colors group",
-                    isCollapsed && "justify-center",
-                  )}
-                >
-                  <History className="w-4 h-4 shrink-0" />
-                  {!isCollapsed && (
-                    <div className="flex flex-col items-start overflow-hidden text-left flex-1 min-w-0">
-                      <span className="text-sm truncate w-full group-hover:text-primary transition-colors">
-                        Project Database {i}
-                      </span>
-                    </div>
-                  )}
-                </button>
+                {isCollapsed ? "—" : "No chat history yet"}
               </div>
-            ))}
+            ) : (
+              messages
+                .filter((m) => m.role === "user")
+                .slice(-5)
+                .reverse()
+                .map((msg) => (
+                  <div
+                    key={msg.id}
+                    className="px-2"
+                    title={isCollapsed ? msg.content : undefined}
+                  >
+                    <div
+                      className={clsx(
+                        "w-full flex items-center gap-3 p-2 rounded-lg text-text-secondary hover:bg-white/5 hover:text-text-primary transition-colors group",
+                        isCollapsed && "justify-center",
+                      )}
+                    >
+                      <History className="w-4 h-4 shrink-0" />
+                      {!isCollapsed && (
+                        <div className="flex flex-col items-start overflow-hidden text-left flex-1 min-w-0">
+                          <span className="text-sm truncate w-full group-hover:text-primary transition-colors">
+                            {msg.content.slice(0, 40)}
+                            {msg.content.length > 40 ? "..." : ""}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
+            )}
           </div>
 
           <div className="p-3 border-t border-border/50">

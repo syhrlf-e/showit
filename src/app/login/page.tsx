@@ -2,6 +2,7 @@
 
 import { signIn } from "next-auth/react";
 import { Github, Chrome, LogIn } from "lucide-react";
+import Link from "next/link";
 
 export default function LoginPage() {
   return (
@@ -47,9 +48,9 @@ export default function LoginPage() {
         </div>
 
         <div className="text-center">
-          <a href="/" className="text-sm text-primary hover:underline">
+          <Link href="/" className="text-sm text-primary hover:underline">
             Go back to editor
-          </a>
+          </Link>
         </div>
       </div>
     </div>

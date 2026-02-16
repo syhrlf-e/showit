@@ -4,16 +4,14 @@ import { X, Send, Database, MessageSquare } from "lucide-react";
 import { clsx } from "clsx";
 import { useERDStore } from "@/store/erdStore";
 import { LoadingDots } from "@/components/ui/LoadingDots";
+import { useAIGenerate } from "@/hooks/useAIGenerate";
 
 export function ChatDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [mode, setMode] = useState<"natural" | "sql">("natural");
   const messages = useERDStore((state) => state.messages);
-  const addMessage = useERDStore((state) => state.addMessage);
-  const importSQL = useERDStore((state) => state.importSQL);
-  const isGenerating = useERDStore((state) => state.isGenerating);
-  const setIsGenerating = useERDStore((state) => state.setIsGenerating);
+  const { generate, isGenerating } = useAIGenerate();
 
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -35,58 +33,7 @@ export function ChatDialog() {
   }, []);
 
   const handleSend = async () => {
-    if (!input.trim()) return;
-
-    addMessage({
-      id: crypto.randomUUID(),
-      role: "user",
-      content: input,
-      timestamp: Date.now(),
-    });
-
-    setIsGenerating(true);
-    const currentInput = input;
-    setInput("");
-
-    try {
-      if (mode === "sql") {
-        importSQL(currentInput);
-        addMessage({
-          id: crypto.randomUUID(),
-          role: "system",
-          content: "Executed SQL command successfully.",
-          timestamp: Date.now(),
-        });
-      } else {
-        const response = await fetch("/api/ai/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: currentInput }),
-        });
-
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Failed to generate");
-
-        importSQL(data.sql);
-        addMessage({
-          id: crypto.randomUUID(),
-          role: "system",
-          content: "Generated schema based on your request.",
-          timestamp: Date.now(),
-        });
-      }
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "An unknown error occurred";
-      addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content: `Error: ${errorMessage}`,
-        timestamp: Date.now(),
-      });
-    } finally {
-      setIsGenerating(false);
-    }
+    await generate(input, mode, () => setInput(""));
   };
 
   return (

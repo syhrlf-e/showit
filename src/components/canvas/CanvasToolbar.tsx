@@ -11,13 +11,18 @@ import {
 import { useReactFlow } from "@xyflow/react";
 import { useERDStore } from "@/store/erdStore";
 import { clsx } from "clsx";
+import { useShallow } from "zustand/react/shallow";
 
 export function CanvasToolbar() {
   const { zoomIn, zoomOut, fitView } = useReactFlow();
-  const addNode = useERDStore((state) => state.addNode);
-  const layoutNodes = useERDStore((state) => state.layoutNodes);
-  const toggleGrid = useERDStore((state) => state.toggleGrid);
-  const showGrid = useERDStore((state) => state.showGrid);
+  const { addNode, layoutNodes, toggleGrid, showGrid } = useERDStore(
+    useShallow((state) => ({
+      addNode: state.addNode,
+      layoutNodes: state.layoutNodes,
+      toggleGrid: state.toggleGrid,
+      showGrid: state.showGrid,
+    })),
+  );
 
   const handleAddTable = () => {
     const id = crypto.randomUUID();

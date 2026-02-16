@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import {
   ReactFlow,
   Background,
@@ -24,13 +25,14 @@ export function ERDCanvas() {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect } =
     useERDStore();
   const theme = useERDStore((state) => state.theme);
-  if (typeof document !== "undefined") {
+
+  useEffect(() => {
     if (theme === "dark") {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
-  }
+  }, [theme]);
 
   return (
     <div className="w-full h-full bg-background relative">

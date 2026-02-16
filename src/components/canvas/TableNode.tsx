@@ -133,6 +133,8 @@ export const TableNode = memo(
   },
 );
 
+TableNode.displayName = "TableNode";
+
 import {
   Tooltip,
   TooltipContent,
