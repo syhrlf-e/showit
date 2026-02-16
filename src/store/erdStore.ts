@@ -446,7 +446,7 @@ export const useERDStore = create<ERDState>()(
             nodes: finalNodes,
             edges: newEdges,
           });
-        } catch (error) {
+        } catch {
           // Suppress syntax errors during typing as they are expected.
           // We could add a state 'isSyntaxError' to the store if we want to show UI feedback.
           // For now, just silently fail to sync, keeping the old valid state.
