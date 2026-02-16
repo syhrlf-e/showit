@@ -14,12 +14,20 @@ export function InputSection() {
   const [error, setError] = useState<string | null>(null);
   const isGenerating = useERDStore((state) => state.isGenerating);
   const setIsGenerating = useERDStore((state) => state.setIsGenerating);
-  const addToHistory = useERDStore((state) => state.addToHistory);
+  const addMessage = useERDStore((state) => state.addMessage);
   const importSQL = useERDStore((state) => state.importSQL);
   const setSidebarOpen = useERDStore((state) => state.setSidebarOpen);
 
   const handleGenerate = async () => {
     if (!input.trim()) return;
+
+    // Add user message immediately
+    addMessage({
+      id: crypto.randomUUID(),
+      role: "user",
+      content: input,
+      timestamp: Date.now(),
+    });
 
     setIsGenerating(true);
     setError(null);
@@ -28,9 +36,10 @@ export function InputSection() {
       if (mode === "sql") {
         // Direct SQL import
         importSQL(input);
-        addToHistory({
+        addMessage({
           id: crypto.randomUUID(),
-          prompt: "Import SQL",
+          role: "system",
+          content: "Imported SQL successfully.",
           timestamp: Date.now(),
         });
         setInput("");
@@ -52,11 +61,15 @@ export function InputSection() {
 
         const generatedSQL = data.sql;
         importSQL(generatedSQL);
-        addToHistory({
+
+        // Add AI response to chat
+        addMessage({
           id: crypto.randomUUID(),
-          prompt: input,
+          role: "system",
+          content: "Generated tables based on your request.",
           timestamp: Date.now(),
         });
+
         setInput("");
       }
     } catch (err: unknown) {
@@ -64,6 +77,14 @@ export function InputSection() {
       const errorMessage =
         err instanceof Error ? err.message : "Something went wrong.";
       setError(errorMessage);
+
+      // Optional: Add error message to chat
+      addMessage({
+        id: crypto.randomUUID(),
+        role: "system",
+        content: `Error: ${errorMessage}`,
+        timestamp: Date.now(),
+      });
     } finally {
       setIsGenerating(false);
     }

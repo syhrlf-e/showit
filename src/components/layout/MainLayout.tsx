@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useState, useEffect } from "react";
+import { type ReactNode } from "react";
 import { Header } from "./Header";
 import { useERDStore } from "@/store/erdStore";
 import { PanelLeftOpen } from "lucide-react";
@@ -13,72 +13,39 @@ interface MainLayoutProps {
 export function MainLayout({ children, sidebar }: MainLayoutProps) {
   const sidebarOpen = useERDStore((state) => state.sidebarOpen);
   const setSidebarOpen = useERDStore((state) => state.setSidebarOpen);
-  const [sidebarWidth, setSidebarWidth] = useState(400);
-  const [isResizing, setIsResizing] = useState(false);
-
-  useEffect(() => {
-    if (!isResizing) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const newWidth = e.clientX;
-      if (newWidth >= 300 && newWidth <= 800) {
-        setSidebarWidth(newWidth);
-      }
-    };
-
-    const handleMouseUp = () => {
-      setIsResizing(false);
-      document.body.style.cursor = "default";
-      document.body.style.userSelect = "auto";
-    };
-
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [isResizing]);
-
-  const startResizing = () => {
-    setIsResizing(true);
-    document.body.style.cursor = "col-resize";
-    document.body.style.userSelect = "none";
-  };
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-background text-text-primary overflow-hidden">
-      <Header />
-      <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar Container */}
-        {sidebarOpen ? (
-          <div
-            className="h-full flex-shrink-0 relative group border-r border-border"
-            style={{ width: sidebarWidth }}
+    <div className="h-screen w-screen flex bg-background text-text-primary overflow-hidden">
+      {/* Sidebar Container */}
+      {/* We allow the Sidebar component to handle its own width (w-16 or w-64) */}
+      {sidebarOpen ? (
+        <div className="h-full flex-shrink-0 relative group border-r border-border">
+          {sidebar}
+        </div>
+      ) : (
+        <div className="h-full flex-shrink-0 border-r border-border flex flex-col items-center py-2 w-16 bg-sidebar hidden">
+          {/* Hidden in code mode or totally collapsed? 
+               For now, if sidebarOpen is false (Code Mode), we hide it to give full space.
+               Or we could just show the Sidebar in collapsed mode. 
+               Let's respect the store for now, but hide the legacy placeholder if it's confusing.
+           */}
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-white/10 transition-colors mt-2"
+            title="Show Sidebar"
           >
-            {sidebar}
+            <PanelLeftOpen className="w-5 h-5" />
+          </button>
+        </div>
+      )}
 
-            {/* Resizer Handle */}
-            <div
-              onMouseDown={startResizing}
-              className="absolute right-[-2px] top-0 bottom-0 w-1 cursor-col-resize z-50 hover:bg-primary/50 transition-colors"
-            />
-          </div>
-        ) : (
-          <div className="h-full flex-shrink-0 border-r border-border flex flex-col items-center py-2 w-10 bg-sidebar">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="p-1.5 rounded-md text-text-secondary hover:text-text-primary hover:bg-white/10 transition-colors"
-              title="Expand Sidebar"
-            >
-              <PanelLeftOpen className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-
-        {/* Main Content */}
-        <main className="flex-1 h-full relative">{children}</main>
+      {/* Main Content Wrapper */}
+      <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
+        <Header />
+        {/* Main Canvas Area */}
+        <main className="flex-1 h-full relative overflow-hidden">
+          {children}
+        </main>
       </div>
     </div>
   );

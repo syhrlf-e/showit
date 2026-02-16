@@ -37,7 +37,11 @@ export const TableNode = memo(
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: "easeOut" }}
+        transition={{
+          duration: 0.3,
+          ease: "easeOut",
+          delay: data.animationDelay || 0,
+        }}
         className={clsx(
           "bg-card border rounded-lg shadow-lg min-w-[240px] overflow-hidden transition-all",
           selected

@@ -37,12 +37,26 @@ interface ERDState {
     data: Partial<Column>,
   ) => void;
   removeColumn: (nodeId: string, columnId: string) => void;
-  history: { id: string; prompt: string; timestamp: number }[];
-  addToHistory: (entry: {
+  messages: {
     id: string;
-    prompt: string;
+    role: "user" | "system";
+    content: string;
+    timestamp: number;
+  }[];
+  addMessage: (message: {
+    id: string;
+    role: "user" | "system";
+    content: string;
     timestamp: number;
   }) => void;
+  setMessages: (
+    messages: {
+      id: string;
+      role: "user" | "system";
+      content: string;
+      timestamp: number;
+    }[],
+  ) => void;
   isGenerating: boolean;
   setIsGenerating: (isGenerating: boolean) => void;
   layoutNodes: () => void;
@@ -62,10 +76,10 @@ interface ERDState {
 export const useERDStore = create<ERDState>()(
   persist(
     (set, get) => ({
-      history: [],
+      messages: [],
       isGenerating: false,
-      addToHistory: (entry) =>
-        set({ history: [entry, ...get().history].slice(0, 50) }),
+      addMessage: (message) => set({ messages: [...get().messages, message] }),
+      setMessages: (messages) => set({ messages }),
       setIsGenerating: (isGenerating) => set({ isGenerating }),
       nodes: DEFAULT_NODES,
       edges: DEFAULT_EDGES,
@@ -216,44 +230,77 @@ export const useERDStore = create<ERDState>()(
       setSqlCode: (code) => set({ sqlCode: code }),
       importSQL: (sql) => {
         try {
-          const { nodes: parsedNodes } = parseSQLToERD(sql);
-          if (parsedNodes.length > 0) {
-            const currentNodes = get().nodes;
-            const currentEdges = get().edges;
+          // Parse new SQL
+          const { nodes: newNodes, edges: newEdges } = parseSQLToERD(sql);
 
-            // Smart merge: match by table name, preserve id & position
-            const mergedNodes = parsedNodes.map((parsedNode, index) => {
-              const tableName = parsedNode.data.label.toLowerCase();
-              const existingNode = currentNodes.find(
-                (n) => n.data.label.toLowerCase() === tableName,
-              );
-
-              if (existingNode) {
-                // Update columns only, keep id and position
-                return {
-                  ...existingNode,
-                  data: {
-                    ...existingNode.data,
-                    columns: parsedNode.data.columns,
-                  },
-                };
-              }
-
-              // New table, give it a position
-              return {
-                ...parsedNode,
-                position: { x: 100 + index * 300, y: 100 },
-              };
-            });
-
-            set({ nodes: mergedNodes, edges: currentEdges, sqlCode: sql });
-            toast.success("SQL imported successfully");
-          } else {
-            toast.warning("No tables found in SQL");
+          if (newNodes.length === 0) {
+            toast.warning("No valid tables found in SQL");
+            return;
           }
+
+          const currentNodes = get().nodes;
+          const currentEdges = get().edges;
+
+          // Merge Nodes
+          const mergedNodes = [...currentNodes];
+          let newNodesCount = 0;
+
+          newNodes.forEach((newNode) => {
+            const existingNodeIndex = mergedNodes.findIndex(
+              (n) => n.data.label === newNode.data.label,
+            );
+
+            if (existingNodeIndex !== -1) {
+              // Update existing node columns
+              mergedNodes[existingNodeIndex] = {
+                ...mergedNodes[existingNodeIndex],
+                data: {
+                  ...mergedNodes[existingNodeIndex].data,
+                  columns: newNode.data.columns,
+                },
+              };
+            } else {
+              // Add new node with animation delay
+              mergedNodes.push({
+                ...newNode,
+                data: {
+                  ...newNode.data,
+                  animationDelay: newNodesCount * 0.15, // Stagger by 0.15s
+                },
+              });
+              newNodesCount++;
+            }
+          });
+
+          // Merge Edges
+          const mergedEdges = [...currentEdges];
+
+          newEdges.forEach((newEdge) => {
+            const exists = mergedEdges.some(
+              (e) =>
+                (e.source === newEdge.source && e.target === newEdge.target) ||
+                (e.source === newEdge.target && e.target === newEdge.source),
+            );
+
+            if (!exists) {
+              mergedEdges.push(newEdge);
+            }
+          });
+
+          set({
+            nodes: mergedNodes,
+            edges: mergedEdges,
+            isGenerating: false,
+          });
+
+          // Auto Layout
+          get().layoutNodes();
+
+          toast.success(`Imported ${newNodes.length} tables successfully`);
         } catch (error) {
-          console.error("Failed to import SQL", error);
-          toast.error("Failed to import SQL. Check syntax.");
+          console.error("Import Error:", error);
+          toast.error("Failed to import SQL");
+          set({ isGenerating: false });
         }
       },
       sidebarOpen: true,

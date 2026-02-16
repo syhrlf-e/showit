@@ -11,4 +11,5 @@ export interface Column {
 export interface TableData extends Record<string, unknown> {
   label: string;
   columns: Column[];
+  animationDelay?: number;
 }

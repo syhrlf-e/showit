@@ -1,26 +1,31 @@
 "use client";
 
-import { Download, ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useERDStore } from "@/store/erdStore";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { clsx } from "clsx";
 
 export function HistoryPanel() {
-  const history = useERDStore((state) => state.history);
+  const messages = useERDStore((state) => state.messages);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   return (
     <div
       className={clsx(
-        "flex flex-col border-t border-border transition-all duration-300",
-        isCollapsed ? "h-auto" : "h-1/3 min-h-[200px]",
+        "flex flex-col border-b border-border transition-all duration-300 flex-1",
+        isCollapsed ? "h-10 grow-0" : "h-full",
       )}
     >
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
         className="w-full px-4 py-2 text-xs font-semibold text-text-secondary uppercase tracking-wider flex items-center justify-between hover:bg-card/50 transition-colors"
       >
-        <span>Recent Activity</span>
+        <span>Chat History</span>
         {isCollapsed ? (
           <ChevronUp className="w-3 h-3" />
         ) : (
@@ -29,31 +34,38 @@ export function HistoryPanel() {
       </button>
 
       {!isCollapsed && (
-        <div className="flex-1 overflow-y-auto px-2 pb-2">
-          {history.length === 0 ? (
+        <div className="flex-1 overflow-y-auto px-2 pb-2 flex flex-col gap-3">
+          {messages.length === 0 ? (
             <div className="text-center text-text-secondary text-xs py-4">
-              No history yet
+              Start chatting to generate tables...
             </div>
           ) : (
-            history.map((item) => (
+            messages.map((msg) => (
               <div
-                key={item.id}
-                className="p-2 hover:bg-white/5 rounded-lg cursor-pointer group transition-colors"
+                key={msg.id}
+                className={clsx(
+                  "p-2 rounded-lg text-sm",
+                  msg.role === "user"
+                    ? "bg-primary/10 text-text-primary self-end ml-4 border border-primary/20"
+                    : "bg-card border border-border text-text-secondary self-start mr-4",
+                )}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-text-secondary">
-                    {new Date(item.timestamp).toLocaleTimeString()}
+                <div className="flex items-center justify-between mb-1 gap-2">
+                  <span className="text-[10px] font-bold uppercase opacity-70">
+                    {msg.role === "user" ? "You" : "AI"}
                   </span>
-                  <button className="opacity-0 group-hover:opacity-100 p-1 hover:bg-white/10 rounded transition-all">
-                    <Download className="w-3 h-3 text-primary" />
-                  </button>
+                  <span className="text-[10px] opacity-50">
+                    {new Date(msg.timestamp).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
                 </div>
-                <p className="text-sm text-text-primary line-clamp-2">
-                  {item.prompt}
-                </p>
+                <p className="whitespace-pre-wrap">{msg.content}</p>
               </div>
             ))
           )}
+          <div ref={bottomRef} />
         </div>
       )}
     </div>

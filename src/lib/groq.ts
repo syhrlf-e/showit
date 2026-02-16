@@ -22,9 +22,9 @@ Rules:
 1. Return ONLY the SQL code. No markdown, no explanations, no code blocks like \`\`\`sql.
 2. Use valid MySQL syntax.
 3. If the user asks for a specific table or feature, generate a complete CREATE TABLE statement.
-4. If the user provides an existing schema, generate SQL to MODIFY or ADD to it (ALTER TABLE or CREATE TABLE).
+4. If the user wants to modify an existing table, return the FULL 'CREATE TABLE' statement for that table with the changes applied. Do NOT use 'ALTER TABLE'.
 5. Use appropriate data types (INT, VARCHAR, TEXT, DATETIME, BOOLEAN, etc.).
-6. Define Primary Keys and Foreign Keys correctly.
+6. Define Primary Keys and Foreign Keys correctly. Use explicit 'CONSTRAINT ... FOREIGN KEY' if possible, or use naming convention 'tablename_id' for implicit keys.
 7. If the request is vague, verify with best practices for database design.
 8. Do NOT wrap output in markdown code blocks. Just raw SQL text.
 `.trim();
