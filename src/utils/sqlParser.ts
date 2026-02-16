@@ -4,6 +4,35 @@ import { TableData, Column } from "../types/erd";
 
 const parser = new Parser();
 
+interface SQLColumnDefinition {
+  column: {
+    column: string;
+  };
+  definition: {
+    dataType: string;
+    length?: number;
+  };
+  resource: "column";
+  primary_key?: "primary key";
+}
+
+interface SQLConstraintDefinition {
+  constraint_type: "primary key";
+  definition: {
+    column: string;
+  }[];
+  resource: "constraint";
+}
+
+type CreateDefinition = SQLColumnDefinition | SQLConstraintDefinition;
+
+interface SQLCreateTableStatement {
+  type: "create";
+  keyword: "table";
+  table: { table: string }[];
+  create_definitions?: CreateDefinition[];
+}
+
 export const parseSQLToERD = (sql: string) => {
   const nodes: Node<TableData>[] = [];
   const edges: Edge[] = [];
@@ -14,38 +43,38 @@ export const parseSQLToERD = (sql: string) => {
     const ast = parser.astify(sql); // Default is MySQL
     const statements = Array.isArray(ast) ? ast : [ast];
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    statements.forEach((stmt: any, index: number) => {
-      if (stmt.type === "create" && stmt.keyword === "table") {
-        const tableName = stmt.table[0].table;
+    statements.forEach((stmt: unknown, index: number) => {
+      const createStmt = stmt as SQLCreateTableStatement;
+
+      if (createStmt.type === "create" && createStmt.keyword === "table") {
+        const tableName = createStmt.table[0].table;
         const columns: Column[] = [];
         const nodeId = crypto.randomUUID();
 
         // Track Primary Keys defined at table level
         const tablePrimaryKeys: string[] = [];
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        stmt.create_definitions?.forEach((def: any) => {
-          if (def.constraint_type === "primary key") {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            def.definition.forEach((col: any) => {
+        createStmt.create_definitions?.forEach((def) => {
+          if (
+            "constraint_type" in def &&
+            def.constraint_type === "primary key"
+          ) {
+            def.definition.forEach((col) => {
               tablePrimaryKeys.push(col.column);
             });
           }
         });
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        stmt.create_definitions?.forEach((def: any) => {
+        createStmt.create_definitions?.forEach((def) => {
           if (def.resource === "column") {
-            // MySQL AST: def.column.column is DIRECTLY a string like "id" or "name"
-            const colName = def.column.column;
-            const dataType = def.definition.dataType;
-            const length = def.definition.length;
+            const colDef = def as SQLColumnDefinition;
+            const colName = colDef.column.column;
+            const dataType = colDef.definition.dataType;
+            const length = colDef.definition.length;
 
-            // Check if column is in table-level PK list OR has inline primary_key
             const isPrimaryKey =
               tablePrimaryKeys.includes(colName) ||
-              def.primary_key === "primary key";
+              colDef.primary_key === "primary key";
 
             columns.push({
               id: crypto.randomUUID(),
@@ -72,7 +101,8 @@ export const parseSQLToERD = (sql: string) => {
     });
   } catch (err) {
     console.error("SQL Parse Error", err);
-    throw err;
+    // Don't throw, just return empty so UI doesn't crash
+    return { nodes: [], edges: [] };
   }
 
   return { nodes, edges };

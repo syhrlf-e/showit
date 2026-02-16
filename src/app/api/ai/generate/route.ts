@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateSQLFromPrompt } from "@/lib/groq";
+import { auth } from "@/auth";
 
 export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { prompt, currentSchema } = await req.json();
 

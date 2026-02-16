@@ -3,7 +3,7 @@
 import { type ReactNode, useState, useEffect } from "react";
 import { Header } from "./Header";
 import { useERDStore } from "@/store/erdStore";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { PanelLeftOpen } from "lucide-react";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -57,15 +57,6 @@ export function MainLayout({ children, sidebar }: MainLayoutProps) {
             className="h-full flex-shrink-0 relative group border-r border-border"
             style={{ width: sidebarWidth }}
           >
-            {/* Minimize Button */}
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="absolute top-2 right-2 z-20 p-1 rounded-md bg-card/80 border border-border text-text-secondary hover:text-text-primary hover:bg-white/10 transition-colors opacity-0 group-hover:opacity-100"
-              title="Minimize Sidebar"
-            >
-              <PanelLeftClose className="w-4 h-4" />
-            </button>
-
             {sidebar}
 
             {/* Resizer Handle */}

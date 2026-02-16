@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, FileCode, MessageSquare, AlertTriangle } from "lucide-react";
+import { AlertTriangle, PanelLeftClose, ChevronDown } from "lucide-react";
 import { clsx } from "clsx";
 import { LoadingDots } from "@/components/ui/LoadingDots";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 
 import { useERDStore } from "@/store/erdStore";
 
@@ -15,6 +16,7 @@ export function InputSection() {
   const setIsGenerating = useERDStore((state) => state.setIsGenerating);
   const addToHistory = useERDStore((state) => state.addToHistory);
   const importSQL = useERDStore((state) => state.importSQL);
+  const setSidebarOpen = useERDStore((state) => state.setSidebarOpen);
 
   const handleGenerate = async () => {
     if (!input.trim()) return;
@@ -70,36 +72,16 @@ export function InputSection() {
   return (
     <div className="flex flex-col gap-4 p-4 border-b border-border bg-card/30">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-primary" />
-          AI Generator
+        <h2 className="text-sm font-semibold text-text-primary">
+          Drop your ideas here
         </h2>
-        <div className="flex bg-background rounded-lg p-1 border border-border">
-          <button
-            onClick={() => setMode("natural")}
-            className={clsx(
-              "px-3 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1",
-              mode === "natural"
-                ? "bg-primary text-white shadow"
-                : "text-text-secondary hover:text-text-primary",
-            )}
-          >
-            <MessageSquare className="w-3 h-3" />
-            Natural
-          </button>
-          <button
-            onClick={() => setMode("sql")}
-            className={clsx(
-              "px-3 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1",
-              mode === "sql"
-                ? "bg-primary text-white shadow"
-                : "text-text-secondary hover:text-text-primary",
-            )}
-          >
-            <FileCode className="w-3 h-3" />
-            SQL
-          </button>
-        </div>
+        <button
+          onClick={() => setSidebarOpen(false)}
+          className="p-1 rounded-md text-text-secondary hover:text-text-primary hover:bg-white/10 transition-colors"
+          title="Collapse Sidebar"
+        >
+          <PanelLeftClose className="w-4 h-4" />
+        </button>
       </div>
 
       <div className="relative">
@@ -115,7 +97,7 @@ export function InputSection() {
               : "Paste your SQL CREATE TABLE statements here..."
           }
           className={clsx(
-            "w-full h-32 bg-background border rounded-lg p-3 text-sm text-text-primary placeholder:text-text-secondary/50 resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors",
+            "w-full h-32 bg-background border rounded-lg p-3 text-sm text-text-primary placeholder:text-text-secondary/50 resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors pb-12",
             error ? "border-red-500 ring-red-500/20" : "border-border",
           )}
         />
@@ -127,20 +109,60 @@ export function InputSection() {
           </div>
         )}
 
-        <div className="absolute bottom-3 right-3 flex items-center gap-2">
-          {isGenerating && (
-            <span className="text-xs text-text-secondary flex items-center gap-1">
-              Generating <LoadingDots />
-            </span>
-          )}
-          <button
-            onClick={handleGenerate}
-            disabled={isGenerating || !input.trim()}
-            className="bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-1.5 rounded-md text-sm font-medium transition-colors shadow-lg shadow-primary/20 flex items-center gap-2"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            {isGenerating ? "Processing..." : "Generate"}
-          </button>
+        <div className="absolute bottom-3 right-3 left-3 flex items-center justify-between">
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <button className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-text-secondary hover:text-text-primary bg-card border border-border rounded-md hover:bg-card/80 transition-colors">
+                {mode === "natural" ? "Natural" : "SQL"}
+                <ChevronDown className="w-3 h-3 opacity-50" />
+              </button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content
+                className="min-w-[100px] bg-card border border-border rounded-md shadow-lg p-1 z-50 animate-in fade-in zoom-in-95"
+                sideOffset={5}
+                align="start"
+              >
+                <DropdownMenu.Item
+                  className={clsx(
+                    "px-2 py-1.5 text-xs rounded-sm outline-none cursor-pointer",
+                    mode === "natural"
+                      ? "bg-primary/10 text-primary"
+                      : "text-text-secondary hover:bg-white/5 hover:text-text-primary",
+                  )}
+                  onSelect={() => setMode("natural")}
+                >
+                  Natural
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  className={clsx(
+                    "px-2 py-1.5 text-xs rounded-sm outline-none cursor-pointer",
+                    mode === "sql"
+                      ? "bg-primary/10 text-primary"
+                      : "text-text-secondary hover:bg-white/5 hover:text-text-primary",
+                  )}
+                  onSelect={() => setMode("sql")}
+                >
+                  SQL
+                </DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
+
+          <div className="flex items-center gap-2">
+            {isGenerating && (
+              <span className="text-xs text-text-secondary flex items-center gap-1">
+                <LoadingDots />
+              </span>
+            )}
+            <button
+              onClick={handleGenerate}
+              disabled={isGenerating || !input.trim()}
+              className="bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-1.5 rounded-md text-sm font-medium transition-colors shadow-lg shadow-primary/20"
+            >
+              {isGenerating ? "Processing..." : "Generate"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

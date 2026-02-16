@@ -1,6 +1,6 @@
 "use client";
 
-import { Lightbulb, Check, RefreshCw, Wand2 } from "lucide-react";
+import { Check, RefreshCw, Wand2 } from "lucide-react";
 import { useERDStore } from "@/store/erdStore";
 import { useState } from "react";
 import { generateSQL } from "@/utils/sqlGenerator"; // We'll use this to get current schema
@@ -72,10 +72,9 @@ export function SuggestionsPanel() {
   };
 
   return (
-    <div className="flex flex-col h-1/3 border-t border-border bg-card/20">
+    <div className="flex-1 flex flex-col min-h-0 border-t border-border bg-card/20">
       <div className="flex items-center justify-between p-4 border-b border-border">
-        <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
-          <Lightbulb className="w-4 h-4 text-yellow-500" />
+        <h2 className="text-sm font-semibold text-text-primary">
           AI Suggestions
         </h2>
         <button
