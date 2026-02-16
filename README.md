@@ -22,19 +22,27 @@
 - Toggle Primary Key dan Foreign Key
 - Atur nullable/not null per kolom
 
-### 3. **AI-Assisted Generation** _(Simulasi)_
+### 3. **Realtime SQL Editor**
+
+- **Split View**: Visual | Code | Split
+- **Syntax Highlighting**: SQL coding dengan tema (Dark/Light)
+- **2-Way Sync**:
+  - Auto-generate SQL saat diagram berubah
+  - "Apply Changes" untuk update diagram dari SQL manual
+
+### 4. **AI-Assisted Generation** _(Simulasi)_
 
 - Input prompt untuk generate skema otomatis
 - Template preset (blog, e-commerce, dll)
 - History prompt dengan timestamp
 
-### 4. **Export & Persistence**
+### 5. **Export & Persistence**
 
 - **Export SQL**: Generate `CREATE TABLE` statements
 - **Export Image**: Download diagram sebagai PNG
 - **Auto-save**: State tersimpan di localStorage
 
-### 5. **Theme & UX**
+### 6. **Theme & UX**
 
 - Dark/Light mode toggle (default: Dark)
 - Animasi smooth dengan Framer Motion

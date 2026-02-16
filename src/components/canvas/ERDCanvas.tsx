@@ -5,7 +5,6 @@ import {
   Background,
   type NodeTypes,
   type EdgeTypes,
-  MiniMap,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { TableNode } from "./TableNode";
@@ -54,11 +53,6 @@ export function ERDCanvas() {
         {useERDStore((state) => state.showGrid) && (
           <Background gap={16} size={1} color="#2a2a2a" />
         )}
-        <MiniMap
-          className="!bg-card !border-border"
-          maskColor="#0a0a0a"
-          nodeColor="#3b82f6"
-        />
         <CanvasToolbar />
       </ReactFlow>
     </div>

@@ -14,6 +14,7 @@ import {
 } from "@xyflow/react";
 import { type TableData, type Column } from "../types/erd";
 import dagre from "dagre";
+import { parseSQLToERD } from "@/utils/sqlParser";
 
 interface ERDState {
   nodes: Node<TableData>[];
@@ -44,6 +45,13 @@ interface ERDState {
   toggleGrid: () => void;
   theme: "dark" | "light";
   toggleTheme: () => void;
+  sqlMode: "visual" | "code";
+  setSqlMode: (mode: "visual" | "code") => void;
+  sqlCode: string;
+  setSqlCode: (code: string) => void;
+  importSQL: (sql: string) => void;
+  sidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
 }
 
 export const useERDStore = create<ERDState>()(
@@ -65,7 +73,7 @@ export const useERDStore = create<ERDState>()(
               {
                 id: "c1",
                 name: "id",
-                type: "uuid",
+                type: "int",
                 isPrimaryKey: true,
                 isForeignKey: false,
                 isNullable: false,
@@ -73,7 +81,8 @@ export const useERDStore = create<ERDState>()(
               {
                 id: "c2",
                 name: "email",
-                type: "varchar(255)",
+                type: "varchar",
+                length: "255",
                 isPrimaryKey: false,
                 isForeignKey: false,
                 isNullable: false,
@@ -99,7 +108,7 @@ export const useERDStore = create<ERDState>()(
               {
                 id: "p1",
                 name: "id",
-                type: "uuid",
+                type: "int",
                 isPrimaryKey: true,
                 isForeignKey: false,
                 isNullable: false,
@@ -107,7 +116,7 @@ export const useERDStore = create<ERDState>()(
               {
                 id: "p2",
                 name: "user_id",
-                type: "uuid",
+                type: "int",
                 isPrimaryKey: false,
                 isForeignKey: true,
                 isNullable: false,
@@ -115,7 +124,8 @@ export const useERDStore = create<ERDState>()(
               {
                 id: "p3",
                 name: "title",
-                type: "varchar(255)",
+                type: "varchar",
+                length: "255",
                 isPrimaryKey: false,
                 isForeignKey: false,
                 isNullable: false,
@@ -283,9 +293,53 @@ export const useERDStore = create<ERDState>()(
       theme: "dark",
       toggleTheme: () =>
         set((state) => ({ theme: state.theme === "dark" ? "light" : "dark" })),
+      sqlMode: "visual",
+      setSqlMode: (mode) => set({ sqlMode: mode }),
+      sqlCode: "",
+      setSqlCode: (code) => set({ sqlCode: code }),
+      importSQL: (sql) => {
+        try {
+          const { nodes: parsedNodes } = parseSQLToERD(sql);
+          if (parsedNodes.length > 0) {
+            const currentNodes = get().nodes;
+            const currentEdges = get().edges;
+
+            // Smart merge: match by table name, preserve id & position
+            const mergedNodes = parsedNodes.map((parsedNode, index) => {
+              const tableName = parsedNode.data.label.toLowerCase();
+              const existingNode = currentNodes.find(
+                (n) => n.data.label.toLowerCase() === tableName,
+              );
+
+              if (existingNode) {
+                // Update columns only, keep id and position
+                return {
+                  ...existingNode,
+                  data: {
+                    ...existingNode.data,
+                    columns: parsedNode.data.columns,
+                  },
+                };
+              }
+
+              // New table, give it a position
+              return {
+                ...parsedNode,
+                position: { x: 100 + index * 300, y: 100 },
+              };
+            });
+
+            set({ nodes: mergedNodes, edges: currentEdges, sqlCode: sql });
+          }
+        } catch (error) {
+          console.error("Failed to import SQL", error);
+        }
+      },
+      sidebarOpen: true,
+      setSidebarOpen: (open) => set({ sidebarOpen: open }),
     }),
     {
-      name: "erd-storage",
+      name: "erd-storage-mysql", // Changed from 'erd-storage' to force fresh start
     },
   ),
 );

@@ -11,18 +11,35 @@ export function generateSQL(nodes: Node<TableData>[], edges: Edge[]): string {
 
     const primaryKeys: string[] = [];
 
+    const hasPrimaryKey = node.data.columns.some((c) => c.isPrimaryKey);
+
     node.data.columns.forEach((col, index) => {
       const colName = col.name;
-      const colType = col.type.toUpperCase();
+
+      // Map PostgreSQL types to MySQL equivalents
+      let colType = col.type.toUpperCase();
+      if (colType === "UUID") {
+        colType = "CHAR(36)"; // UUID stored as CHAR(36) in MySQL
+      } else if (colType === "JSONB") {
+        colType = "JSON"; // JSONB → JSON in MySQL
+      } else if (colType === "INTEGER") {
+        colType = "INT"; // INTEGER → INT in MySQL
+      } else if (colType === "BOOLEAN") {
+        colType = "TINYINT(1)"; // BOOLEAN → TINYINT(1) in MySQL
+      }
+
       const nullable = col.isNullable ? "NULL" : "NOT NULL";
 
-      let line = `  ${colName} ${colType} ${nullable}`;
+      // Add length if specified (e.g., VARCHAR(255))
+      let fullType = colType;
+      if (col.length && !colType.includes("(")) {
+        fullType = `${colType}(${col.length})`;
+      }
 
-      if (
-        index < node.data.columns.length - 1 ||
-        col.isPrimaryKey ||
-        col.isForeignKey
-      ) {
+      let line = `  ${colName} ${fullType} ${nullable}`;
+
+      // Add comma if not last column OR if we have PKs to append
+      if (index < node.data.columns.length - 1 || hasPrimaryKey) {
         line += ",";
       }
 
@@ -31,13 +48,7 @@ export function generateSQL(nodes: Node<TableData>[], edges: Edge[]): string {
       if (col.isPrimaryKey) {
         primaryKeys.push(colName);
       }
-      if (col.isForeignKey) {
-        // We need edges to find the target table
-        // This is a simplified approach, ideally we should match column IDs with edge handles
-        // For now, let's assume standard naming convention or skip explicit FK constraint generation in this iteration if too complex
-        // But we can try to guess based on edges if possible.
-        // Actually, let's just collect them for now.
-      }
+      // Foreign Keys logic...
     });
 
     if (primaryKeys.length > 0) {

@@ -5,10 +5,8 @@ import {
   ZoomOut,
   Maximize,
   Grid,
-  Moon,
   LayoutTemplate,
   Plus,
-  Sun,
 } from "lucide-react";
 import { useReactFlow } from "@xyflow/react";
 import { useERDStore } from "@/store/erdStore";
@@ -20,8 +18,6 @@ export function CanvasToolbar() {
   const layoutNodes = useERDStore((state) => state.layoutNodes);
   const toggleGrid = useERDStore((state) => state.toggleGrid);
   const showGrid = useERDStore((state) => state.showGrid);
-  const theme = useERDStore((state) => state.theme);
-  const toggleTheme = useERDStore((state) => state.toggleTheme);
 
   const handleAddTable = () => {
     const id = crypto.randomUUID();
@@ -35,7 +31,7 @@ export function CanvasToolbar() {
           {
             id: crypto.randomUUID(),
             name: "id",
-            type: "uuid",
+            type: "int",
             isPrimaryKey: true,
             isForeignKey: false,
             isNullable: false,
@@ -96,17 +92,6 @@ export function CanvasToolbar() {
         title="Toggle Grid"
       >
         <Grid className="w-4 h-4" />
-      </button>
-      <button
-        onClick={toggleTheme}
-        className="p-2 hover:bg-white/5 rounded-md text-text-secondary hover:text-text-primary transition-colors"
-        title="Toggle Theme"
-      >
-        {theme === "dark" ? (
-          <Moon className="w-4 h-4" />
-        ) : (
-          <Sun className="w-4 h-4" />
-        )}
       </button>
     </div>
   );

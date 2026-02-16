@@ -103,30 +103,29 @@ export const TableNode = memo(
         </div>
 
         {/* Handles */}
-        {/* Handles */}
         <Handle
           id="left"
           type="target"
           position={Position.Left}
-          className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!w-4 hover:!h-4 transition-all !-left-1.5"
+          className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!w-4 hover:!h-4 transition-all !-left-1.5 !top-1/2 !-translate-y-1/2"
         />
         <Handle
           id="right"
           type="source"
           position={Position.Right}
-          className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!w-4 hover:!h-4 transition-all !-right-1.5"
+          className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!w-4 hover:!h-4 transition-all !-right-1.5 !top-1/2 !-translate-y-1/2"
         />
         <Handle
           id="top"
           type="target"
           position={Position.Top}
-          className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!w-4 hover:!h-4 transition-all !-top-1.5"
+          className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!w-4 hover:!h-4 transition-all !-top-1.5 !left-1/2 !-translate-x-1/2"
         />
         <Handle
           id="bottom"
           type="source"
           position={Position.Bottom}
-          className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!w-4 hover:!h-4 transition-all !-bottom-1.5"
+          className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!w-4 hover:!h-4 transition-all !-bottom-1.5 !left-1/2 !-translate-x-1/2"
         />
       </motion.div>
     );

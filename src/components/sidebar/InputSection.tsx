@@ -1,207 +1,70 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, FileCode, MessageSquare } from "lucide-react";
+import { Sparkles, FileCode, MessageSquare, AlertTriangle } from "lucide-react";
 import { clsx } from "clsx";
-import { LoadingDots } from "../ui/LoadingDots";
+import { LoadingDots } from "@/components/ui/LoadingDots";
 
 import { useERDStore } from "@/store/erdStore";
 
 export function InputSection() {
   const [mode, setMode] = useState<"natural" | "sql">("natural");
   const [input, setInput] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const isGenerating = useERDStore((state) => state.isGenerating);
   const setIsGenerating = useERDStore((state) => state.setIsGenerating);
   const addToHistory = useERDStore((state) => state.addToHistory);
-  const addNode = useERDStore((state) => state.addNode);
+  const importSQL = useERDStore((state) => state.importSQL);
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (!input.trim()) return;
 
     setIsGenerating(true);
+    setError(null);
 
-    // Simulate API delay
-    setTimeout(() => {
-      const prompt = input.toLowerCase();
-
-      if (prompt.includes("blog")) {
-        // Add Blog Schema
-        addNode({
+    try {
+      if (mode === "sql") {
+        // Direct SQL import
+        importSQL(input);
+        addToHistory({
           id: crypto.randomUUID(),
-          type: "table",
-          position: { x: Math.random() * 500, y: Math.random() * 500 },
-          data: {
-            label: "Posts",
-            columns: [
-              {
-                id: crypto.randomUUID(),
-                name: "id",
-                type: "uuid",
-                isPrimaryKey: true,
-                isForeignKey: false,
-                isNullable: false,
-              },
-              {
-                id: crypto.randomUUID(),
-                name: "title",
-                type: "varchar",
-                isPrimaryKey: false,
-                isForeignKey: false,
-                isNullable: false,
-              },
-              {
-                id: crypto.randomUUID(),
-                name: "content",
-                type: "text",
-                isPrimaryKey: false,
-                isForeignKey: false,
-                isNullable: true,
-              },
-            ],
-          },
+          prompt: "Import SQL",
+          timestamp: Date.now(),
         });
-        addNode({
-          id: crypto.randomUUID(),
-          type: "table",
-          position: { x: Math.random() * 500, y: Math.random() * 500 },
-          data: {
-            label: "Comments",
-            columns: [
-              {
-                id: crypto.randomUUID(),
-                name: "id",
-                type: "uuid",
-                isPrimaryKey: true,
-                isForeignKey: false,
-                isNullable: false,
-              },
-              {
-                id: crypto.randomUUID(),
-                name: "post_id",
-                type: "uuid",
-                isPrimaryKey: false,
-                isForeignKey: true,
-                isNullable: false,
-              },
-              {
-                id: crypto.randomUUID(),
-                name: "body",
-                type: "text",
-                isPrimaryKey: false,
-                isForeignKey: false,
-                isNullable: false,
-              },
-            ],
-          },
-        });
-      } else if (prompt.includes("ecommerce") || prompt.includes("shop")) {
-        // Add E-commerce Schema
-        addNode({
-          id: crypto.randomUUID(),
-          type: "table",
-          position: { x: Math.random() * 500, y: Math.random() * 500 },
-          data: {
-            label: "Products",
-            columns: [
-              {
-                id: crypto.randomUUID(),
-                name: "id",
-                type: "uuid",
-                isPrimaryKey: true,
-                isForeignKey: false,
-                isNullable: false,
-              },
-              {
-                id: crypto.randomUUID(),
-                name: "name",
-                type: "varchar",
-                isPrimaryKey: false,
-                isForeignKey: false,
-                isNullable: false,
-              },
-              {
-                id: crypto.randomUUID(),
-                name: "price",
-                type: "decimal",
-                isPrimaryKey: false,
-                isForeignKey: false,
-                isNullable: false,
-              },
-            ],
-          },
-        });
-        addNode({
-          id: crypto.randomUUID(),
-          type: "table",
-          position: { x: Math.random() * 500, y: Math.random() * 500 },
-          data: {
-            label: "Orders",
-            columns: [
-              {
-                id: crypto.randomUUID(),
-                name: "id",
-                type: "uuid",
-                isPrimaryKey: true,
-                isForeignKey: false,
-                isNullable: false,
-              },
-              {
-                id: crypto.randomUUID(),
-                name: "user_id",
-                type: "uuid",
-                isPrimaryKey: false,
-                isForeignKey: true,
-                isNullable: false,
-              },
-              {
-                id: crypto.randomUUID(),
-                name: "total",
-                type: "decimal",
-                isPrimaryKey: false,
-                isForeignKey: false,
-                isNullable: false,
-              },
-            ],
-          },
-        });
+        setInput("");
       } else {
-        // Generic Fallback
-        addNode({
-          id: crypto.randomUUID(),
-          type: "table",
-          position: { x: Math.random() * 500, y: Math.random() * 500 },
-          data: {
-            label: "AI_Generated_Table",
-            columns: [
-              {
-                id: crypto.randomUUID(),
-                name: "id",
-                type: "uuid",
-                isPrimaryKey: true,
-                isForeignKey: false,
-                isNullable: false,
-              },
-              {
-                id: crypto.randomUUID(),
-                name: "name",
-                type: "varchar",
-                isPrimaryKey: false,
-                isForeignKey: false,
-                isNullable: true,
-              },
-            ],
+        // Generate SQL from Natural Language via AI
+        const response = await fetch("/api/ai/generate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
+          body: JSON.stringify({ prompt: input }),
         });
-      }
 
-      addToHistory({
-        id: crypto.randomUUID(),
-        prompt: input,
-        timestamp: Date.now(),
-      });
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to generate SQL");
+        }
+
+        const generatedSQL = data.sql;
+        importSQL(generatedSQL);
+        addToHistory({
+          id: crypto.randomUUID(),
+          prompt: input,
+          timestamp: Date.now(),
+        });
+        setInput("");
+      }
+    } catch (err: unknown) {
+      console.error("Generation Error:", err);
+      const errorMessage =
+        err instanceof Error ? err.message : "Something went wrong.";
+      setError(errorMessage);
+    } finally {
       setIsGenerating(false);
-      setInput("");
-    }, 1500);
+    }
   };
 
   return (
@@ -242,23 +105,37 @@ export function InputSection() {
       <div className="relative">
         <textarea
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => {
+            setInput(e.target.value);
+            if (error) setError(null);
+          }}
           placeholder={
             mode === "natural"
               ? "Describe your database... (e.g., 'Create a blog system with users, posts, and comments')"
-              : "CREATE TABLE users (...);"
+              : "Paste your SQL CREATE TABLE statements here..."
           }
-          className="w-full h-32 bg-background border border-border rounded-lg p-3 text-sm text-text-primary placeholder:text-text-secondary/50 resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+          className={clsx(
+            "w-full h-32 bg-background border rounded-lg p-3 text-sm text-text-primary placeholder:text-text-secondary/50 resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors",
+            error ? "border-red-500 ring-red-500/20" : "border-border",
+          )}
         />
+
+        {error && (
+          <div className="absolute bottom-14 left-3 right-3 bg-red-500/10 border border-red-500/20 rounded px-2 py-1 text-xs text-red-500 flex items-center gap-1">
+            <AlertTriangle className="w-3 h-3" />
+            {error}
+          </div>
+        )}
+
         <div className="absolute bottom-3 right-3 flex items-center gap-2">
           {isGenerating && (
-            <span className="text-xs text-secondary flex items-center gap-1">
+            <span className="text-xs text-text-secondary flex items-center gap-1">
               Generating <LoadingDots />
             </span>
           )}
           <button
             onClick={handleGenerate}
-            disabled={isGenerating}
+            disabled={isGenerating || !input.trim()}
             className="bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-1.5 rounded-md text-sm font-medium transition-colors shadow-lg shadow-primary/20 flex items-center gap-2"
           >
             <Sparkles className="w-3.5 h-3.5" />
