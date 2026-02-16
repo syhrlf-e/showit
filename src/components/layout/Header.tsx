@@ -54,35 +54,6 @@ export function Header() {
     <header className="h-14 border-b border-border bg-sidebar flex items-center justify-between px-4 relative flex-shrink-0 z-50">
       {/* Left Section: Branding or Title */}
       <div className="flex items-center gap-2 w-[200px] pl-4">
-        {/* Restored VIDA text as requested previously, but wait, the view in 964 showed "Playground/Untitled Project" 
-            BUT in Step 806 I added "VIDA". 
-            The file content in 964 seems to have LOST the "VIDA" text I added in Step 806?
-            This is because I was editing the Header file in parallel or the view in 964 was from a state that had reverted?
-            
-            Let's check Step 806:
-            +      <div className="flex items-center gap-2 w-[200px] pl-4">
-            +        <h1 className="font-bold text-lg text-text-primary tracking-tight">
-            +          VIDA
-            +        </h1>
-            +      </div>
-
-            The view in 964 (lines 60-70) shows:
-            60:       <div className="flex items-center gap-3 w-[200px]">
-            61:         <div className="flex flex-col">
-            ... sessions ...
-
-            The user asked "nama VIDA nya berada di header".
-            I supposedly executed that.
-            If 964 shows sessions, it means my previous edit might have been overwritten or I'm looking at a different version?
-            Or maybe I edited it, but then a subsequent edit (or git checkout?) changed it back?
-            
-            Wait, I should prioritize the USER REQUEST: "nama VIDA nya berada di header".
-            So I will restore the VIDA text and remove the session info if that's what was replaced.
-            Or maybe the user wants BOTH?
-            "icon posisinya sudah benar, nah nama VIDA nya berada di header"
-            
-            I will put VIDA there.
-        */}
         <h1 className="font-bold text-lg text-text-primary tracking-tight">
           ShowIt
         </h1>
