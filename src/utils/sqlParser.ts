@@ -40,7 +40,7 @@ export const parseSQLToERD = (sql: string) => {
   if (!sql.trim()) return { nodes, edges };
 
   try {
-    const ast = parser.astify(sql); // Default is MySQL
+    const ast = parser.astify(sql);
     const statements = Array.isArray(ast) ? ast : [ast];
 
     statements.forEach((stmt: unknown, index: number) => {
@@ -51,7 +51,6 @@ export const parseSQLToERD = (sql: string) => {
         const columns: Column[] = [];
         const nodeId = crypto.randomUUID();
 
-        // Track Primary Keys defined at table level
         const tablePrimaryKeys: string[] = [];
 
         createStmt.create_definitions?.forEach((def) => {
@@ -101,7 +100,6 @@ export const parseSQLToERD = (sql: string) => {
     });
   } catch (err) {
     console.error("SQL Parse Error", err);
-    // Don't throw, just return empty so UI doesn't crash
     return { nodes: [], edges: [] };
   }
 

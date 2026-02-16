@@ -24,8 +24,6 @@ export function ERDCanvas() {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect } =
     useERDStore();
   const theme = useERDStore((state) => state.theme);
-
-  // Sync theme with document class
   if (typeof document !== "undefined") {
     if (theme === "dark") {
       document.documentElement.classList.add("dark");

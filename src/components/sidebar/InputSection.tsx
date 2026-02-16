@@ -21,7 +21,6 @@ export function InputSection() {
   const handleGenerate = async () => {
     if (!input.trim()) return;
 
-    // Add user message immediately
     addMessage({
       id: crypto.randomUUID(),
       role: "user",
@@ -34,7 +33,6 @@ export function InputSection() {
 
     try {
       if (mode === "sql") {
-        // Direct SQL import
         importSQL(input);
         addMessage({
           id: crypto.randomUUID(),
@@ -44,7 +42,6 @@ export function InputSection() {
         });
         setInput("");
       } else {
-        // Generate SQL from Natural Language via AI
         const response = await fetch("/api/ai/generate", {
           method: "POST",
           headers: {
@@ -62,7 +59,6 @@ export function InputSection() {
         const generatedSQL = data.sql;
         importSQL(generatedSQL);
 
-        // Add AI response to chat
         addMessage({
           id: crypto.randomUUID(),
           role: "system",
@@ -78,7 +74,6 @@ export function InputSection() {
         err instanceof Error ? err.message : "Something went wrong.";
       setError(errorMessage);
 
-      // Optional: Add error message to chat
       addMessage({
         id: crypto.randomUUID(),
         role: "system",

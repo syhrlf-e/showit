@@ -49,7 +49,6 @@ export const TableNode = memo(
             : "border-border hover:border-primary/50",
         )}
       >
-        {/* Header */}
         <div className="px-4 py-3 bg-sidebar border-b border-border flex items-center justify-between group">
           {isEditingTitle ? (
             <input
@@ -81,7 +80,6 @@ export const TableNode = memo(
           </div>
         </div>
 
-        {/* Body */}
         <div className="p-2 flex flex-col gap-1">
           <AnimatePresence>
             {data.columns.map((col) => (
@@ -106,7 +104,6 @@ export const TableNode = memo(
           </button>
         </div>
 
-        {/* Handles */}
         <Handle
           id="left"
           type="target"
@@ -225,7 +222,6 @@ const ColumnRow = ({
           </DropdownMenu.Portal>
         </DropdownMenu.Root>
 
-        {/* Length Input */}
         <input
           defaultValue={column.length || ""}
           className="bg-transparent text-text-secondary text-xs w-12 outline-none border-b border-primary/50 font-mono text-center"

@@ -4,7 +4,6 @@ import { type TableData } from "../types/erd";
 export function generateSQL(nodes: Node<TableData>[], edges: Edge[]): string {
   let sql = "";
 
-  // 1. Create Tables
   nodes.forEach((node) => {
     const tableName = node.data.label.toLowerCase().replace(/\s+/g, "_");
     sql += `CREATE TABLE ${tableName} (\n`;
@@ -16,21 +15,19 @@ export function generateSQL(nodes: Node<TableData>[], edges: Edge[]): string {
     node.data.columns.forEach((col, index) => {
       const colName = col.name;
 
-      // Map PostgreSQL types to MySQL equivalents
       let colType = col.type.toUpperCase();
       if (colType === "UUID") {
-        colType = "CHAR(36)"; // UUID stored as CHAR(36) in MySQL
+        colType = "CHAR(36)";
       } else if (colType === "JSONB") {
-        colType = "JSON"; // JSONB → JSON in MySQL
+        colType = "JSON";
       } else if (colType === "INTEGER") {
-        colType = "INT"; // INTEGER → INT in MySQL
+        colType = "INT";
       } else if (colType === "BOOLEAN") {
-        colType = "TINYINT(1)"; // BOOLEAN → TINYINT(1) in MySQL
+        colType = "TINYINT(1)";
       }
 
       const nullable = col.isNullable ? "NULL" : "NOT NULL";
 
-      // Add length if specified (e.g., VARCHAR(255))
       let fullType = colType;
       if (col.length && !colType.includes("(")) {
         fullType = `${colType}(${col.length})`;
@@ -38,7 +35,6 @@ export function generateSQL(nodes: Node<TableData>[], edges: Edge[]): string {
 
       let line = `  ${colName} ${fullType} ${nullable}`;
 
-      // Add comma if not last column OR if we have PKs to append
       if (index < node.data.columns.length - 1 || hasPrimaryKey) {
         line += ",";
       }
@@ -48,7 +44,6 @@ export function generateSQL(nodes: Node<TableData>[], edges: Edge[]): string {
       if (col.isPrimaryKey) {
         primaryKeys.push(colName);
       }
-      // Foreign Keys logic...
     });
 
     if (primaryKeys.length > 0) {
@@ -58,8 +53,6 @@ export function generateSQL(nodes: Node<TableData>[], edges: Edge[]): string {
     sql += `);\n\n`;
   });
 
-  // 2. Add Foreign Keys (Alter Table)
-  // We iterate over edges to find relationships
   edges.forEach((edge) => {
     const sourceNode = nodes.find((n) => n.id === edge.source);
     const targetNode = nodes.find((n) => n.id === edge.target);
@@ -71,11 +64,6 @@ export function generateSQL(nodes: Node<TableData>[], edges: Edge[]): string {
       const targetTable = targetNode.data.label
         .toLowerCase()
         .replace(/\s+/g, "_");
-
-      // Assuming the FK is on the "many" side (target) pointing to "one" side (source)
-      // or we need to look at the edge type/data.
-      // For simplicity in this mockup:
-      // We will generate a generic comment or attempt a standard ALTER TABLE
 
       sql += `-- Relationship: ${sourceTable} -> ${targetTable} (${edge.data?.type || "1:N"})\n`;
       sql += `-- ALTER TABLE ${targetTable} ADD CONSTRAINT fk_${sourceTable} FOREIGN KEY (source_id) REFERENCES ${sourceTable}(id);\n\n`;

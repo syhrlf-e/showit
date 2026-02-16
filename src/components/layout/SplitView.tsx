@@ -11,7 +11,6 @@ export function SplitView() {
     return <ERDCanvas />;
   }
 
-  // Code mode: show Visual + Code side by side
   return (
     <div className="flex h-full w-full">
       <div className="flex-1 h-full border-r border-border">

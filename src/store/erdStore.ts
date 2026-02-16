@@ -18,9 +18,6 @@ import { parseSQLToERD } from "@/utils/sqlParser";
 import { DEFAULT_NODES, DEFAULT_EDGES } from "@/lib/constants";
 import { toast } from "sonner";
 
-/**
- * Interface representing the state and actions of the ERD Store.
- */
 interface ERDState {
   nodes: Node<TableData>[];
   edges: Edge[];
@@ -210,7 +207,7 @@ export const useERDStore = create<ERDState>()(
             return {
               ...node,
               position: {
-                x: nodeWithPosition.x - 120, // Center offset
+                x: nodeWithPosition.x - 120,
                 y:
                   nodeWithPosition.y -
                   (100 + node.data.columns.length * 32) / 2,
@@ -230,7 +227,6 @@ export const useERDStore = create<ERDState>()(
       setSqlCode: (code) => set({ sqlCode: code }),
       importSQL: (sql) => {
         try {
-          // Parse new SQL
           const { nodes: newNodes, edges: newEdges } = parseSQLToERD(sql);
 
           if (newNodes.length === 0) {
@@ -241,7 +237,6 @@ export const useERDStore = create<ERDState>()(
           const currentNodes = get().nodes;
           const currentEdges = get().edges;
 
-          // Merge Nodes
           const mergedNodes = [...currentNodes];
           let newNodesCount = 0;
 
@@ -251,7 +246,6 @@ export const useERDStore = create<ERDState>()(
             );
 
             if (existingNodeIndex !== -1) {
-              // Update existing node columns
               mergedNodes[existingNodeIndex] = {
                 ...mergedNodes[existingNodeIndex],
                 data: {
@@ -260,19 +254,17 @@ export const useERDStore = create<ERDState>()(
                 },
               };
             } else {
-              // Add new node with animation delay
               mergedNodes.push({
                 ...newNode,
                 data: {
                   ...newNode.data,
-                  animationDelay: newNodesCount * 0.15, // Stagger by 0.15s
+                  animationDelay: newNodesCount * 0.15,
                 },
               });
               newNodesCount++;
             }
           });
 
-          // Merge Edges
           const mergedEdges = [...currentEdges];
 
           newEdges.forEach((newEdge) => {
@@ -293,7 +285,6 @@ export const useERDStore = create<ERDState>()(
             isGenerating: false,
           });
 
-          // Auto Layout
           get().layoutNodes();
 
           toast.success(`Imported ${newNodes.length} tables successfully`);
@@ -307,7 +298,7 @@ export const useERDStore = create<ERDState>()(
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
     }),
     {
-      name: "erd-storage-mysql", // Changed from 'erd-storage' to force fresh start
+      name: "erd-storage-mysql",
     },
   ),
 );

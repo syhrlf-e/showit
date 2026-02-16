@@ -50,7 +50,6 @@ export function ChatDialog() {
 
     try {
       if (mode === "sql") {
-        // Direct SQL Execution
         importSQL(currentInput);
         addMessage({
           id: crypto.randomUUID(),
@@ -59,8 +58,6 @@ export function ChatDialog() {
           timestamp: Date.now(),
         });
       } else {
-        // AI Generation
-        // AI Generation
         const response = await fetch("/api/ai/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -117,7 +114,6 @@ export function ChatDialog() {
             </Dialog.Description>
           </div>
 
-          {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-border/50 bg-card/50 backdrop-blur-md rounded-t-xl">
             <div className="flex items-center gap-2">
               <div className="p-2 bg-primary/10 rounded-lg">
@@ -139,7 +135,6 @@ export function ChatDialog() {
             </Dialog.Close>
           </div>
 
-          {/* Chat Area */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[400px] bg-background/50">
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-text-secondary opacity-50 gap-2">
@@ -189,9 +184,7 @@ export function ChatDialog() {
             <div ref={bottomRef} />
           </div>
 
-          {/* Input Area */}
           <div className="p-4 border-t border-border/50 bg-card/50 rounded-b-xl">
-            {/* Mode Toggles */}
             <div className="flex items-center gap-1 mb-3">
               <button
                 onClick={() => setMode("natural")}

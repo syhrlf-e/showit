@@ -5,7 +5,6 @@ import { useERDStore } from "@/store/erdStore";
 import { generateSQL } from "@/utils/sqlGenerator";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { toPng } from "html-to-image";
-// Removed auth imports as they moved to Sidebar
 
 export function Header() {
   const nodes = useERDStore((state) => state.nodes);
@@ -52,14 +51,12 @@ export function Header() {
 
   return (
     <header className="h-14 border-b border-border bg-sidebar flex items-center justify-between px-4 relative">
-      {/* Left: Spacer (Logo moved to Sidebar) */}
       <div className="flex items-center gap-2 w-[200px] pl-4">
         <h1 className="font-bold text-lg text-text-primary tracking-tight">
           VIDA
         </h1>
       </div>
 
-      {/* Center: View Toggle */}
       <div className="absolute left-1/2 -translate-x-1/2 flex items-center bg-background/50 rounded-lg p-1 border border-border">
         <button
           onClick={handleVisualMode}
@@ -83,7 +80,6 @@ export function Header() {
         </button>
       </div>
 
-      {/* Right: Export & Actions */}
       <div className="flex items-center gap-2 w-[200px] justify-end">
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>

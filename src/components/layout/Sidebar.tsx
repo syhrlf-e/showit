@@ -22,29 +22,23 @@ import { useERDStore } from "@/store/erdStore";
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const { data: session } = useSession();
-  // TODO: Add clearMessages or newChat action to store if needed
   const setMessages = useERDStore((state) => state.setMessages);
 
   const handleNewChat = () => {
-    // For now, just clear messages to simulate new chat.
-    // Ideally, this would create a new session ID.
     setMessages([]);
   };
 
   return (
     <>
       <aside className="h-full relative z-50 group">
-        {/* Fixed Placeholder to hold space in flex layout */}
         <div className="w-16 h-full bg-sidebar border-r border-border flex flex-col items-center py-2" />
 
-        {/* Floating/Overlay Sidebar */}
         <div
           className={clsx(
             "fixed top-0 bottom-0 left-0 bg-sidebar border-r border-border flex flex-col transition-all duration-300 shadow-2xl z-50",
             isCollapsed ? "w-16" : "w-64",
           )}
         >
-          {/* Top Section: Logo & Toggle */}
           <div className="h-14 flex items-center justify-between px-3 border-b border-border/50">
             <div
               className={clsx(
@@ -55,7 +49,6 @@ export function Sidebar() {
               <div className="p-1.5 bg-primary/10 rounded-lg shrink-0">
                 <Database className="w-5 h-5 text-primary" />
               </div>
-              {/* VIDA Text removed from here as requested, it's in Header now */}
             </div>
 
             {!isCollapsed && (
@@ -69,7 +62,6 @@ export function Sidebar() {
             )}
           </div>
 
-          {/* New Chat & Expand Button (if collapsed) */}
           <div className="p-3 flex flex-col gap-2">
             {isCollapsed && (
               <button
@@ -96,9 +88,7 @@ export function Sidebar() {
             </button>
           </div>
 
-          {/* Middle Section: History */}
           <div className="flex-1 overflow-y-auto py-2 flex flex-col gap-1 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
-            {/* Same history content... */}
             <div
               className={clsx(
                 "px-3 py-1 text-xs font-medium text-text-secondary/50",
@@ -132,7 +122,6 @@ export function Sidebar() {
             ))}
           </div>
 
-          {/* Bottom Section: User Profile */}
           <div className="p-3 border-t border-border/50">
             {session ? (
               <DropdownMenu.Root>

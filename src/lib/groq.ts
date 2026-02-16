@@ -4,7 +4,7 @@ export const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY || "dummy_key_for_build",
 });
 
-export const AI_MODEL = "llama-3.3-70b-versatile"; // Or "llama3-70b-8192" based on availability
+export const AI_MODEL = "llama-3.3-70b-versatile";
 
 export async function generateSQLFromPrompt(
   prompt: string,
@@ -40,12 +40,11 @@ Rules:
         { role: "user", content: userMessage },
       ],
       model: AI_MODEL,
-      temperature: 0.1, // Low temperature for deterministic code
+      temperature: 0.1,
       max_tokens: 2048,
     });
 
     const content = completion.choices[0]?.message?.content || "";
-    // Clean up any markdown code blocks if the model ignores the rule
     return content
       .replace(/```sql\n?/g, "")
       .replace(/```/g, "")

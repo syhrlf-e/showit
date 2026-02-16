@@ -30,8 +30,6 @@ export async function POST(req: NextRequest) {
     }
 
     const sql = await generateSQLFromPrompt(prompt, currentSchema);
-
-    // Validate if response is empty
     if (!sql) {
       return NextResponse.json(
         { error: "Failed to generate SQL" },

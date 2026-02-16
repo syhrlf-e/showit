@@ -3,7 +3,7 @@
 import { Check, RefreshCw, Wand2 } from "lucide-react";
 import { useERDStore } from "@/store/erdStore";
 import { useState } from "react";
-import { generateSQL } from "@/utils/sqlGenerator"; // We'll use this to get current schema
+import { generateSQL } from "@/utils/sqlGenerator";
 
 export function SuggestionsPanel() {
   const [suggestions, setSuggestions] = useState<
@@ -31,9 +31,8 @@ export function SuggestionsPanel() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
 
-      // Simple parsing of the AI response which might be wrapped in JSON markdown
       let content = data.sql || "";
-      // Clean up markdown if present
+
       content = content
         .replace(/```json\n?/g, "")
         .replace(/```/g, "")
@@ -43,8 +42,6 @@ export function SuggestionsPanel() {
       try {
         parsedSuggestions = JSON.parse(content);
       } catch (e) {
-        // Fallback if AI didn't return valid JSON (common with smaller models, but Llama 70B is usually good)
-        // For now, let's just mock if parsing fails or show a generic message
         console.error("Failed to parse AI suggestions", e);
       }
 

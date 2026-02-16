@@ -15,23 +15,17 @@ export function SQLEditor() {
   const theme = useERDStore((state) => state.theme);
   const importSQL = useERDStore((state) => state.importSQL);
 
-  // Local state for editor content to avoid jitter
   const [localCode, setLocalCode] = useState(sqlCode);
 
   useEffect(() => {
-    // Generate SQL from current nodes/edges
     const generated = generateSQL(nodes, edges);
     if (!sqlCode || sqlCode !== generated) {
       setLocalCode(generated);
-      // Avoid calling setSqlCode here to prevent loop if sqlCode is already up to date
-      // or if we only want one-way sync on load.
-      // Actually, better logic:
       if (sqlCode !== generated) {
         setSqlCode(generated);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodes, edges, setSqlCode]); // Remove sqlCode from deps to avoid loop
+  }, [nodes, edges, setSqlCode]);
 
   const handleApply = () => {
     importSQL(localCode);
