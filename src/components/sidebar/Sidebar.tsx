@@ -35,7 +35,7 @@ export function Sidebar() {
     <aside
       className={clsx(
         "h-full bg-sidebar border-r border-border flex flex-col transition-all duration-300 relative z-50",
-        sidebarOpen ? "w-[320px]" : "w-[60px]",
+        sidebarOpen ? "w-[400px]" : "w-[60px]",
       )}
     >
       {/* Sidebar Header */}
