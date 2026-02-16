@@ -21,6 +21,8 @@ import { toast } from "sonner";
 interface ERDState {
   nodes: Node<TableData>[];
   edges: Edge[];
+  setNodes: (nodes: Node<TableData>[]) => void;
+  setEdges: (edges: Edge[]) => void;
   onNodesChange: OnNodesChange<Node<TableData>>;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
@@ -63,6 +65,8 @@ export const useERDStore = create<ERDState>()(
       setIsGenerating: (isGenerating) => set({ isGenerating }),
       nodes: DEFAULT_NODES,
       edges: DEFAULT_EDGES,
+      setNodes: (nodes) => set({ nodes }),
+      setEdges: (edges) => set({ edges }),
       onNodesChange: (changes) => {
         set({
           nodes: applyNodeChanges(changes, get().nodes),

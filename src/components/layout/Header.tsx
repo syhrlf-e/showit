@@ -1,6 +1,14 @@
 "use client";
 
-import { FileJson, Download, Image, ChevronDown } from "lucide-react";
+import {
+  FileJson,
+  Download,
+  Image,
+  ChevronDown,
+  Database,
+  PanelLeftOpen,
+  PanelLeftClose,
+} from "lucide-react";
 import { useERDStore } from "@/store/erdStore";
 import { generateSQL } from "@/utils/sqlGenerator";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
@@ -9,6 +17,8 @@ import { toPng } from "html-to-image";
 export function Header() {
   const nodes = useERDStore((state) => state.nodes);
   const edges = useERDStore((state) => state.edges);
+  const sidebarOpen = useERDStore((state) => state.sidebarOpen);
+  const setSidebarOpen = useERDStore((state) => state.setSidebarOpen);
 
   const handleExportSQL = () => {
     const sql = generateSQL(nodes, edges);
@@ -37,7 +47,6 @@ export function Header() {
 
   const setSqlMode = useERDStore((state) => state.setSqlMode);
   const sqlMode = useERDStore((state) => state.sqlMode);
-  const setSidebarOpen = useERDStore((state) => state.setSidebarOpen);
 
   const handleCodeMode = () => {
     setSqlMode("code");
@@ -50,11 +59,27 @@ export function Header() {
   };
 
   return (
-    <header className="h-14 border-b border-border bg-sidebar flex items-center justify-between px-4 relative">
-      <div className="flex items-center gap-2 w-[200px] pl-4">
-        <h1 className="font-bold text-lg text-text-primary tracking-tight">
-          VIDA
-        </h1>
+    <header className="h-14 border-b border-border bg-sidebar flex items-center justify-between px-4 relative flex-shrink-0 z-50">
+      <div className="flex items-center gap-3 w-[200px]">
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-white/10 transition-colors"
+          title={sidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
+        >
+          {sidebarOpen ? (
+            <PanelLeftClose className="w-5 h-5" />
+          ) : (
+            <PanelLeftOpen className="w-5 h-5" />
+          )}
+        </button>
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-primary/10 rounded-lg">
+            <Database className="w-4 h-4 text-primary" />
+          </div>
+          <h1 className="font-bold text-lg text-text-primary tracking-tight">
+            VIDA
+          </h1>
+        </div>
       </div>
 
       <div className="absolute left-1/2 -translate-x-1/2 flex items-center bg-background/50 rounded-lg p-1 border border-border">
