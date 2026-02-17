@@ -1,11 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateSQLFromPrompt } from "@/lib/groq";
 import { auth } from "@/auth";
+import { rateLimiter } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const ip = req.headers.get("x-forwarded-for") ?? "127.0.0.1";
+  const allowed = await rateLimiter.check(10, ip);
+
+  if (!allowed) {
+    return NextResponse.json(
+      { error: "Rate limit exceeded. Please try again later." },
+      { status: 429 },
+    );
   }
 
   try {

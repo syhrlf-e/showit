@@ -19,7 +19,24 @@ function cleanSQL(raw: string): string {
 
 function validateSQL(sql: string): { valid: boolean; error?: string } {
   try {
-    sqlParser.astify(sql, { database: "MySQL" });
+    const ast = sqlParser.astify(sql, { database: "MySQL" });
+    const statements = Array.isArray(ast) ? ast : [ast];
+
+    for (const stmt of statements) {
+      if (stmt.type !== "create") {
+        return {
+          valid: false,
+          error: `Forbidden SQL statement type: ${stmt.type}. Only CREATE TABLE is allowed.`,
+        };
+      }
+      if ((stmt as any).keyword !== "table") {
+        return {
+          valid: false,
+          error: `Only CREATE TABLE is allowed. Found CREATE ${(stmt as any).keyword}`,
+        };
+      }
+    }
+
     return { valid: true };
   } catch (err) {
     return {
