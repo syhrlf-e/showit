@@ -356,8 +356,8 @@ const ColumnRow = ({
           className={clsx(
             "transition-colors",
             column.isPrimaryKey
-              ? "text-primary"
-              : "text-text-secondary/20 hover:text-text-secondary",
+              ? "text-primary opacity-100"
+              : "text-text-secondary/20 hover:text-text-secondary opacity-0",
           )}
         >
           <KeyRound className="w-3 h-3" />

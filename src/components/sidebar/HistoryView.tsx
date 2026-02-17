@@ -1,5 +1,5 @@
 import { useERDStore } from "@/store/erdStore";
-import { MessageSquare, Calendar, Trash2 } from "lucide-react";
+import { MessageSquare, Calendar, Trash2, Plus } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 export function HistoryView() {
@@ -10,13 +10,23 @@ export function HistoryView() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-border">
-        <h2 className="text-lg font-semibold text-text-primary mb-1">
-          Chat History
-        </h2>
-        <p className="text-xs text-text-secondary">
-          Your conversation history with Showit AI
-        </p>
+      <div className="p-4 border-b border-border flex flex-col gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-text-primary mb-1">
+            Chat History
+          </h2>
+          <p className="text-xs text-text-secondary">
+            Your conversation history with Showit AI
+          </p>
+        </div>
+
+        <button
+          onClick={createNewChat}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          New Chat
+        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
@@ -29,12 +39,6 @@ export function HistoryView() {
             <p className="text-xs text-text-secondary mt-1 mb-4">
               Start a new chat to generate your database schema.
             </p>
-            <button
-              onClick={createNewChat}
-              className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-medium transition-colors"
-            >
-              Start New Chat
-            </button>
           </div>
         ) : (
           <div className="flex flex-col gap-2">

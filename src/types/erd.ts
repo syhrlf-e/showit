@@ -17,7 +17,7 @@ export interface TableData extends Record<string, unknown> {
 
 export interface ChatMessage {
   id: string;
-  role: "user" | "system";
+  role: "user" | "system" | "assistant";
   content: string;
   timestamp: number;
 }

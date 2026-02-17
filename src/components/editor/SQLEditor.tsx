@@ -80,15 +80,15 @@ export function SQLEditor() {
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-3 shadow-2xl p-2 rounded-xl bg-card border border-border/50 backdrop-blur-md z-50">
             <button
               onClick={handleReject}
-              className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg text-sm font-medium transition-colors border border-red-500/20"
+              className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-md text-xs font-medium transition-colors"
             >
               Reject
             </button>
             <button
               onClick={handleAccept}
-              className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors shadow-lg shadow-green-500/20"
+              className="px-3 py-1.5 bg-primary/20 hover:bg-primary/30 text-primary-foreground rounded-md text-xs font-medium transition-colors"
             >
-              Accept
+              Apply Changes
             </button>
           </div>
         )}

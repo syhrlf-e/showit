@@ -115,11 +115,51 @@ export const useERDStore = create<ERDState>()(
       loadSession: (sessionId) => {
         const session = get().sessions.find((s) => s.id === sessionId);
         if (session) {
+          // 1. Set basic session state
           set({
             currentChatId: sessionId,
             messages: session.messages,
             currentView: "chat",
           });
+
+          // 2. Find last SQL code in messages to restore canvas
+          const lastSqlMessage = [...session.messages]
+            .reverse()
+            .find(
+              (m) =>
+                m.role === "assistant" && m.content.includes("CREATE TABLE"),
+            );
+
+          if (lastSqlMessage) {
+            // Extract SQL from code block
+            const sqlMatch = lastSqlMessage.content.match(
+              /```sql\n([\s\S]*?)\n```/,
+            );
+            if (sqlMatch && sqlMatch[1]) {
+              const sql = sqlMatch[1];
+
+              // 3. Update SQL Editor
+              set({ sqlCode: sql });
+
+              // 4. Update Canvas (Parse SQL)
+              const { nodes, edges } = parseSQLToERD(sql);
+
+              // Force a state update with new object references to ensure React Flow detects changes
+              set({
+                nodes: [...nodes],
+                edges: [...edges],
+                // Ensure layout is triggered after state update
+              });
+
+              // 5. Layout nodes for better visibility (delayed slightly to allow render)
+              setTimeout(() => {
+                get().layoutNodes();
+              }, 50);
+            }
+          } else {
+            // If no SQL found, clear canvas/editor to avoid ghost states
+            set({ sqlCode: "", nodes: [], edges: [] });
+          }
         }
       },
 

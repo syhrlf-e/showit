@@ -11,7 +11,8 @@ import {
 import "@xyflow/react/dist/style.css";
 import { TableNode } from "./TableNode";
 import { RelationshipEdge } from "./RelationshipEdge";
-import { CanvasToolbar } from "./CanvasToolbar";
+import { ZoomToolbar } from "./ZoomToolbar";
+import { ActionToolbar } from "./ActionToolbar";
 import { useERDStore } from "@/store/erdStore";
 
 const nodeTypes: NodeTypes = {
@@ -45,7 +46,7 @@ export function ERDCanvas() {
         onConnect={onConnect}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        fitView
+        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
         colorMode={theme}
         connectionMode={ConnectionMode.Loose}
         className="bg-background"
@@ -55,7 +56,8 @@ export function ERDCanvas() {
         {useERDStore((state) => state.showGrid) && (
           <Background gap={20} size={1} color="#555" style={{ opacity: 0.5 }} />
         )}
-        <CanvasToolbar />
+        <ZoomToolbar />
+        <ActionToolbar />
       </ReactFlow>
     </div>
   );

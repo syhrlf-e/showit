@@ -52,15 +52,28 @@ export function useAIGenerate() {
           throw new Error(data.error || "Failed to generate SQL");
         }
 
-        setPendingSQL(data.sql);
-        setSidebarMode("editor");
+        const currentNodes = useERDStore.getState().nodes;
 
-        addMessage({
-          id: crypto.randomUUID(),
-          role: "system",
-          content: "Generated schema. Please review changes in the Editor.",
-          timestamp: Date.now(),
-        });
+        if (currentNodes.length === 0) {
+          // First generation: Auto-apply and stay in chat
+          importSQL(data.sql);
+          addMessage({
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: `Here is the initial schema for your request:\n\n\`\`\`sql\n${data.sql}\n\`\`\`\n\nI have applied this to the canvas. You can now ask for refinements!`,
+            timestamp: Date.now(),
+          });
+        } else {
+          // Subsequent generations: Require approval
+          setPendingSQL(data.sql);
+          setSidebarMode("editor");
+          addMessage({
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: `I have generated updates based on your request:\n\n\`\`\`sql\n${data.sql}\n\`\`\`\n\nPlease review and apply these changes in the **Editor** tab.`,
+            timestamp: Date.now(),
+          });
+        }
       }
 
       onSuccess?.();
