@@ -6,6 +6,7 @@ import {
   Background,
   type NodeTypes,
   type EdgeTypes,
+  ConnectionMode,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { TableNode } from "./TableNode";
@@ -46,6 +47,7 @@ export function ERDCanvas() {
         edgeTypes={edgeTypes}
         fitView
         colorMode={theme}
+        connectionMode={ConnectionMode.Loose}
         className="bg-background"
         minZoom={0.1}
         maxZoom={2}

@@ -15,8 +15,9 @@ import { useShallow } from "zustand/react/shallow";
 
 export function CanvasToolbar() {
   const { zoomIn, zoomOut, fitView } = useReactFlow();
-  const { addNode, layoutNodes, toggleGrid, showGrid } = useERDStore(
+  const { nodes, addNode, layoutNodes, toggleGrid, showGrid } = useERDStore(
     useShallow((state) => ({
+      nodes: state.nodes,
       addNode: state.addNode,
       layoutNodes: state.layoutNodes,
       toggleGrid: state.toggleGrid,
@@ -26,12 +27,23 @@ export function CanvasToolbar() {
 
   const handleAddTable = () => {
     const id = crypto.randomUUID();
+
+    // Generate unique snake_case name
+    let baseName = "new_table";
+    let counter = 0;
+    let newName = baseName;
+
+    while (nodes.some((n) => n.data.label === newName)) {
+      counter++;
+      newName = `${baseName}_${counter}`;
+    }
+
     addNode({
       id,
       type: "table",
       position: { x: 100 + Math.random() * 100, y: 100 + Math.random() * 100 },
       data: {
-        label: "New Table",
+        label: newName,
         columns: [
           {
             id: crypto.randomUUID(),

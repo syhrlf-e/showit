@@ -61,10 +61,18 @@ interface ERDState {
   toggleGrid: () => void;
   theme: "dark" | "light";
   toggleTheme: () => void;
+
+  // Unified Sidebar Mode
+  sidebarMode: "chat" | "editor";
+  setSidebarMode: (mode: "chat" | "editor") => void;
+
+  // SQL Editor State
   sqlMode: "visual" | "code";
   setSqlMode: (mode: "visual" | "code") => void;
   sqlCode: string;
   setSqlCode: (code: string) => void;
+  pendingSQL: string | null;
+  setPendingSQL: (code: string | null) => void;
   importSQL: (sql: string) => void;
   syncSQL: (sql: string) => void;
   sidebarOpen: boolean;
@@ -79,6 +87,11 @@ export const useERDStore = create<ERDState>()(
       setCurrentView: (view) => set({ currentView: view }),
       currentChatId: null,
       sessions: [],
+
+      sidebarMode: "chat",
+      setSidebarMode: (mode) => set({ sidebarMode: mode }),
+      pendingSQL: null,
+      setPendingSQL: (code) => set({ pendingSQL: code }),
 
       createNewChat: () => {
         const newSessionId = crypto.randomUUID();
@@ -333,6 +346,7 @@ export const useERDStore = create<ERDState>()(
       setSqlMode: (mode) => set({ sqlMode: mode }),
       sqlCode: "",
       setSqlCode: (code) => set({ sqlCode: code }),
+
       importSQL: (sql) => {
         try {
           const { nodes: newNodes, edges: newEdges } = parseSQLToERD(sql);

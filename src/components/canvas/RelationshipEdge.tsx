@@ -3,7 +3,7 @@
 import {
   BaseEdge,
   type EdgeProps,
-  getBezierPath,
+  getSmoothStepPath,
   EdgeLabelRenderer,
 } from "@xyflow/react";
 import { memo } from "react";
@@ -21,13 +21,14 @@ export const RelationshipEdge = memo(
     data,
     selected,
   }: EdgeProps) => {
-    const [edgePath, labelX, labelY] = getBezierPath({
+    const [edgePath, labelX, labelY] = getSmoothStepPath({
       sourceX,
       sourceY,
       sourcePosition,
       targetX,
       targetY,
       targetPosition,
+      borderRadius: 20,
     });
 
     const EDGE_COLORS = {

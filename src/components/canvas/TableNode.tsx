@@ -2,11 +2,55 @@
 
 import { memo, useState, useRef, useEffect } from "react";
 import { Handle, Position, type NodeProps, type Node } from "@xyflow/react";
-import { KeyRound, MoreVertical, Plus, Trash2, X } from "lucide-react";
+import { KeyRound, MoreVertical, Plus, Trash2, X, Palette } from "lucide-react";
 import { type TableData, type Column } from "../../types/erd";
 import { motion, AnimatePresence } from "framer-motion";
 import { useERDStore } from "@/store/erdStore";
 import { clsx } from "clsx";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+
+const TABLE_COLORS = [
+  {
+    name: "Default",
+    value: "bg-sidebar border-border",
+    preview: "bg-gray-600",
+  },
+  {
+    name: "Blue",
+    value: "bg-blue-500/10 border-blue-500/50",
+    preview: "bg-blue-500",
+  },
+  {
+    name: "Green",
+    value: "bg-emerald-500/10 border-emerald-500/50",
+    preview: "bg-emerald-500",
+  },
+  {
+    name: "Red",
+    value: "bg-red-500/10 border-red-500/50",
+    preview: "bg-red-500",
+  },
+  {
+    name: "Orange",
+    value: "bg-orange-500/10 border-orange-500/50",
+    preview: "bg-orange-500",
+  },
+  {
+    name: "Purple",
+    value: "bg-purple-500/10 border-purple-500/50",
+    preview: "bg-purple-500",
+  },
+  {
+    name: "Cyan",
+    value: "bg-cyan-500/10 border-cyan-500/50",
+    preview: "bg-cyan-500",
+  },
+  {
+    name: "Pink",
+    value: "bg-pink-500/10 border-pink-500/50",
+    preview: "bg-pink-500",
+  },
+];
 
 export const TableNode = memo(
   ({ id, data, selected }: NodeProps<Node<TableData>>) => {
@@ -49,7 +93,12 @@ export const TableNode = memo(
             : "border-border hover:border-primary/50",
         )}
       >
-        <div className="px-4 py-3 bg-sidebar border-b border-border flex items-center justify-between group">
+        <div
+          className={clsx(
+            "px-4 py-3 border-b flex items-center justify-between group transition-colors",
+            data.headerColor ? data.headerColor : "bg-sidebar border-border",
+          )}
+        >
           {isEditingTitle ? (
             <input
               ref={titleInputRef}
@@ -67,16 +116,71 @@ export const TableNode = memo(
             </div>
           )}
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
-              onClick={() => deleteNode(id)}
-              className="text-text-secondary hover:text-red-500 transition-colors p-1 rounded hover:bg-white/5"
-              title="Delete Table"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
-            <button className="text-text-secondary hover:text-text-primary transition-colors p-1 rounded hover:bg-white/5">
-              <MoreVertical className="w-4 h-4" />
-            </button>
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger asChild>
+                <button
+                  className="text-text-secondary hover:text-text-primary transition-colors p-1 rounded hover:bg-white/5"
+                  title="Options"
+                >
+                  <MoreVertical className="w-4 h-4" />
+                </button>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Portal>
+                <DropdownMenu.Content
+                  align="end"
+                  className="z-50 min-w-[160px] bg-card border border-border rounded-md shadow-xl p-1 animate-in fade-in zoom-in-95 duration-100"
+                >
+                  <DropdownMenu.Sub>
+                    <DropdownMenu.SubTrigger className="flex items-center justify-between px-2 py-1.5 text-xs rounded-sm outline-none cursor-pointer hover:bg-white/5 text-text-primary group data-[state=open]:bg-white/5">
+                      <div className="flex items-center gap-2">
+                        <Palette className="w-3.5 h-3.5 text-text-secondary group-hover:text-primary" />
+                        <span>Table Color</span>
+                      </div>
+                      <ChevronRight className="w-3 h-3 text-text-secondary" />
+                    </DropdownMenu.SubTrigger>
+                    <DropdownMenu.Portal>
+                      <DropdownMenu.SubContent
+                        className="z-50 min-w-[140px] bg-card border border-border rounded-md shadow-xl p-1 animate-in fade-in zoom-in-95 duration-100 ml-1"
+                        sideOffset={2}
+                      >
+                        <DropdownMenu.Label className="text-[10px] font-semibold text-text-secondary px-2 py-1">
+                          Select Color
+                        </DropdownMenu.Label>
+                        {TABLE_COLORS.map((color) => (
+                          <DropdownMenu.Item
+                            key={color.name}
+                            onSelect={() =>
+                              updateNode(id, { headerColor: color.value })
+                            }
+                            className="flex items-center gap-2 px-2 py-1.5 text-xs rounded-sm outline-none cursor-pointer hover:bg-white/5 group"
+                          >
+                            <div
+                              className={clsx(
+                                "w-3 h-3 rounded-full border border-border/50",
+                                color.preview,
+                              )}
+                            />
+                            <span className="text-text-primary">
+                              {color.name}
+                            </span>
+                          </DropdownMenu.Item>
+                        ))}
+                      </DropdownMenu.SubContent>
+                    </DropdownMenu.Portal>
+                  </DropdownMenu.Sub>
+
+                  <div className="h-px bg-border my-1" />
+
+                  <DropdownMenu.Item
+                    onSelect={() => deleteNode(id)}
+                    className="flex items-center gap-2 px-2 py-1.5 text-xs rounded-sm outline-none cursor-pointer hover:bg-red-500/10 text-red-500 hover:text-red-400 group"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete Table</span>
+                  </DropdownMenu.Item>
+                </DropdownMenu.Content>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Root>
           </div>
         </div>
 
@@ -103,31 +207,6 @@ export const TableNode = memo(
             Add Column
           </button>
         </div>
-
-        <Handle
-          id="left"
-          type="target"
-          position={Position.Left}
-          className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!w-4 hover:!h-4 transition-all !-left-1.5 !top-1/2 !-translate-y-1/2"
-        />
-        <Handle
-          id="right"
-          type="source"
-          position={Position.Right}
-          className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!w-4 hover:!h-4 transition-all !-right-1.5 !top-1/2 !-translate-y-1/2"
-        />
-        <Handle
-          id="top"
-          type="target"
-          position={Position.Top}
-          className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!w-4 hover:!h-4 transition-all !-top-1.5 !left-1/2 !-translate-x-1/2"
-        />
-        <Handle
-          id="bottom"
-          type="source"
-          position={Position.Bottom}
-          className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!w-4 hover:!h-4 transition-all !-bottom-1.5 !left-1/2 !-translate-x-1/2"
-        />
       </motion.div>
     );
   },
@@ -142,8 +221,7 @@ import {
   TooltipTrigger,
 } from "@radix-ui/react-tooltip";
 import { SQL_DATA_TYPES } from "@/constants/dataTypes";
-import { ChevronDown, Check } from "lucide-react";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { ChevronDown, Check, ChevronRight } from "lucide-react";
 
 const ColumnRow = ({
   nodeId,
@@ -250,8 +328,20 @@ const ColumnRow = ({
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -10 }}
-      className="flex items-center justify-between px-2 py-1 hover:bg-white/5 rounded group transition-colors cursor-pointer"
+      className="flex items-center justify-between px-2 py-1 hover:bg-white/5 rounded group transition-colors cursor-pointer relative"
     >
+      <Handle
+        id={`target-${column.id}`}
+        type="target"
+        position={Position.Left}
+        className="opacity-0 group-hover:opacity-100 !w-2 !h-2 !bg-primary !border-none transition-opacity !-left-1"
+      />
+      <Handle
+        id={`source-${column.id}`}
+        type="source"
+        position={Position.Right}
+        className="opacity-0 group-hover:opacity-100 !w-2 !h-2 !bg-primary !border-none transition-opacity !-right-1"
+      />
       <div
         className="flex items-center gap-2 flex-1"
         onDoubleClick={() => setEditing(column.id)}

@@ -65,8 +65,37 @@ export function generateSQL(nodes: Node<TableData>[], edges: Edge[]): string {
         .toLowerCase()
         .replace(/\s+/g, "_");
 
-      sql += `-- Relationship: ${sourceTable} -> ${targetTable} (${edge.data?.type || "1:N"})\n`;
-      sql += `-- ALTER TABLE ${targetTable} ADD CONSTRAINT fk_${sourceTable} FOREIGN KEY (source_id) REFERENCES ${sourceTable}(id);\n\n`;
+      let constraintSQL = "";
+
+      // Check for Column-to-Column connection
+      const sourceHandle = edge.sourceHandle;
+      const targetHandle = edge.targetHandle;
+
+      const getColId = (h: string | null | undefined) =>
+        h ? h.replace(/^(source-|target-)/, "") : null;
+
+      const sourceColId = getColId(sourceHandle);
+      const targetColId = getColId(targetHandle);
+
+      if (sourceColId && targetColId) {
+        const sourceCol = sourceNode.data.columns.find(
+          (c) => c.id === sourceColId,
+        );
+        const targetCol = targetNode.data.columns.find(
+          (c) => c.id === targetColId,
+        );
+
+        if (sourceCol && targetCol) {
+          constraintSQL = `ALTER TABLE ${targetTable} ADD CONSTRAINT fk_${targetTable}_${sourceTable} FOREIGN KEY (${targetCol.name}) REFERENCES ${sourceTable}(${sourceCol.name});`;
+        }
+      }
+
+      if (!constraintSQL) {
+        // Fallback or generic relationship
+        constraintSQL = `-- Relationship: ${sourceTable} -> ${targetTable} (${edge.data?.type || "1:N"})\n-- (Connect specific columns to generate FK constraint)`;
+      }
+
+      sql += `${constraintSQL}\n\n`;
     }
   });
 

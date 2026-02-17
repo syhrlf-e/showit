@@ -24,18 +24,25 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+import { SQLEditor } from "../editor/SQLEditor";
+import { Code } from "lucide-react";
+
 export function Sidebar() {
   const sidebarOpen = useERDStore((state) => state.sidebarOpen);
   const setSidebarOpen = useERDStore((state) => state.setSidebarOpen);
   const currentView = useERDStore((state) => state.currentView);
   const createNewChat = useERDStore((state) => state.createNewChat);
+
+  const sidebarMode = useERDStore((state) => state.sidebarMode);
+  const setSidebarMode = useERDStore((state) => state.setSidebarMode);
+
   const { data: session } = useSession();
 
   return (
     <aside
       className={clsx(
         "h-full bg-sidebar border-r border-border flex flex-col transition-all duration-300 relative z-50",
-        sidebarOpen ? "w-[400px]" : "w-[60px]",
+        sidebarOpen ? "w-[350px]" : "w-[60px]",
       )}
     >
       {/* Sidebar Header */}
@@ -68,6 +75,36 @@ export function Sidebar() {
         )}
       </div>
 
+      {/* Unified Tab Switcher (Only in Chat Mode) */}
+      {sidebarOpen && currentView === "chat" && (
+        <div className="flex items-center p-2 gap-1 border-b border-border bg-sidebar shrink-0">
+          <button
+            onClick={() => setSidebarMode("chat")}
+            className={clsx(
+              "flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all",
+              sidebarMode === "chat"
+                ? "bg-primary/10 text-primary shadow-sm"
+                : "text-text-secondary hover:text-text-primary hover:bg-white/5",
+            )}
+          >
+            <MessageSquare className="w-4 h-4" />
+            AI Chat
+          </button>
+          <button
+            onClick={() => setSidebarMode("editor")}
+            className={clsx(
+              "flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all",
+              sidebarMode === "editor"
+                ? "bg-primary/10 text-primary shadow-sm"
+                : "text-text-secondary hover:text-text-primary hover:bg-white/5",
+            )}
+          >
+            <Code className="w-4 h-4" />
+            Editor
+          </button>
+        </div>
+      )}
+
       {!sidebarOpen && (
         <div className="absolute top-14 left-0 w-full flex flex-col items-center py-4 gap-4">
           <TooltipProvider delayDuration={0}>
@@ -83,10 +120,15 @@ export function Sidebar() {
               <TooltipContent side="right">Expand Sidebar</TooltipContent>
             </Tooltip>
 
+            {/* Quick Actions for Collapsed Mode */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  onClick={createNewChat}
+                  onClick={() => {
+                    setSidebarOpen(true);
+                    setSidebarMode("chat");
+                    createNewChat();
+                  }}
                   className="p-2 text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors"
                 >
                   <Plus className="w-5 h-5" />
@@ -94,22 +136,52 @@ export function Sidebar() {
               </TooltipTrigger>
               <TooltipContent side="right">New Chat</TooltipContent>
             </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button className="p-2 text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors">
-                  <MessageSquare className="w-5 h-5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right">History</TooltipContent>
-            </Tooltip>
           </TooltipProvider>
         </div>
       )}
 
       {/* Main Content */}
-      <div className={clsx("flex-1 overflow-hidden", !sidebarOpen && "hidden")}>
-        {currentView === "history" ? <HistoryView /> : <ChatView />}
+      <div
+        className={clsx(
+          "flex-1 overflow-hidden relative",
+          !sidebarOpen && "hidden",
+        )}
+      >
+        {/* History View Layer (Always on top if active) */}
+        <div
+          className={clsx(
+            "absolute inset-0 flex flex-col bg-sidebar transition-opacity",
+            currentView === "history"
+              ? "opacity-100 z-20"
+              : "opacity-0 pointer-events-none",
+          )}
+        >
+          <HistoryView />
+        </div>
+
+        {/* Chat View Layer */}
+        <div
+          className={clsx(
+            "absolute inset-0 flex flex-col bg-sidebar transition-opacity",
+            currentView === "chat" && sidebarMode === "chat"
+              ? "opacity-100 z-10"
+              : "opacity-0 pointer-events-none",
+          )}
+        >
+          <ChatView />
+        </div>
+
+        {/* Editor View Layer */}
+        <div
+          className={clsx(
+            "absolute inset-0 flex flex-col bg-sidebar transition-opacity",
+            currentView === "chat" && sidebarMode === "editor"
+              ? "opacity-100 z-10"
+              : "opacity-0 pointer-events-none",
+          )}
+        >
+          <SQLEditor />
+        </div>
       </div>
 
       {/* Footer (User Profile) */}

@@ -9,6 +9,8 @@ export function useAIGenerate() {
   const setIsGenerating = useERDStore((state) => state.setIsGenerating);
   const addMessage = useERDStore((state) => state.addMessage);
   const importSQL = useERDStore((state) => state.importSQL);
+  const setPendingSQL = useERDStore((state) => state.setPendingSQL);
+  const setSidebarMode = useERDStore((state) => state.setSidebarMode);
 
   const generate = async (
     input: string,
@@ -29,11 +31,13 @@ export function useAIGenerate() {
 
     try {
       if (mode === "sql") {
-        importSQL(input);
+        setPendingSQL(input);
+        setSidebarMode("editor");
+
         addMessage({
           id: crypto.randomUUID(),
           role: "system",
-          content: "Executed SQL command successfully.",
+          content: "SQL ready for review. Please check the Editor.",
           timestamp: Date.now(),
         });
       } else {
@@ -48,11 +52,13 @@ export function useAIGenerate() {
           throw new Error(data.error || "Failed to generate SQL");
         }
 
-        importSQL(data.sql);
+        setPendingSQL(data.sql);
+        setSidebarMode("editor");
+
         addMessage({
           id: crypto.randomUUID(),
           role: "system",
-          content: "Generated schema based on your request.",
+          content: "Generated schema. Please review changes in the Editor.",
           timestamp: Date.now(),
         });
       }
