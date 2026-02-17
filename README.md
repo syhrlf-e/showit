@@ -1,104 +1,186 @@
-# AI-Visual Database Architect
+# ShowIt — Visual Database Architect
 
-## 📋 Deskripsi Sistem
+> Design, visualize, and generate database schemas with AI assistance.
 
-**AI-Visual Database Architect** adalah aplikasi web interaktif untuk mendesain dan memvisualisasikan skema database secara visual menggunakan diagram Entity-Relationship (ERD). Aplikasi ini memungkinkan pengguna membuat, mengedit, dan mengekspor struktur database dengan antarmuka drag-and-drop yang intuitif.
+**ShowIt** is a modern, interactive web application for designing Entity-Relationship Diagrams (ERD). It combines a visual drag-and-drop canvas with a powerful AI-powered SQL generator, a real-time SQL editor, and OAuth authentication — all in a sleek, dark-first interface.
 
-## 🎯 Fitur Utama
+## ✨ Key Features
 
-### 1. **Visual ERD Canvas**
+### 🖱️ Visual ERD Canvas
 
-- Drag-and-drop tabel dengan koneksi antar-entitas
-- Zoom, pan, dan auto-layout untuk organisasi diagram
-- Grid toggle untuk presisi penempatan
-- Handle koneksi di 4 sisi (top, bottom, left, right)
+- Drag-and-drop table nodes with connection handles on all 4 sides
+- Zoom, pan, and **auto-layout** (powered by Dagre) for organized diagrams
+- Grid toggle for precise placement
+- Custom relationship edges between table columns
 
-### 2. **Manajemen Tabel & Kolom**
+### 📝 Table & Column Management
 
-- Tambah/hapus tabel dan kolom secara dinamis
-- Edit nama tabel dan kolom dengan double-click
-- Dropdown tipe data SQL dengan tooltip deskripsi
-- Input panjang data (contoh: `VARCHAR(255)`)
-- Toggle Primary Key dan Foreign Key
-- Atur nullable/not null per kolom
+- Add/remove tables and columns dynamically
+- Edit table and column names with double-click
+- Set data types (with length), Primary Key, Foreign Key, and Nullable constraints
+- Dropdown with SQL data type tooltips
 
-### 3. **Realtime SQL Editor**
+### 🤖 AI-Powered Schema Generation
 
-- **Split View**: Visual | Code | Split
-- **Syntax Highlighting**: SQL coding dengan tema (Dark/Light)
+- Chat-based interface to describe your database in natural language
+- **Groq LLM** (LLaMA 3.3 70B) generates valid MySQL `CREATE TABLE` statements
+- **Prompt Enhancement**: AI refines vague prompts into detailed schema descriptions before generation
+- **SQL Validation**: Generated SQL is parsed and validated via AST to ensure correctness
+- **Security**: Only `CREATE TABLE` statements are allowed — destructive commands (`DROP`, `DELETE`, etc.) are blocked at the AST level
+- Chat session history with conversation management (create, load, delete)
+
+### 💻 Real-time SQL Editor
+
+- **Split View Modes**: Visual only | Code only | Split (side-by-side)
+- **Syntax Highlighting**: CodeMirror editor with SQL language support
 - **2-Way Sync**:
-  - Auto-generate SQL saat diagram berubah
-  - "Apply Changes" untuk update diagram dari SQL manual
+  - Diagram changes auto-generate SQL
+  - Manual SQL edits can be applied back to the diagram with "Apply Changes"
 
-### 4. **AI-Assisted Generation** _(Simulasi)_
+### 🔐 Authentication
 
-- Input prompt untuk generate skema otomatis
-- Template preset (blog, e-commerce, dll)
-- History prompt dengan timestamp
+- **OAuth Login** via GitHub and Google (powered by NextAuth v5)
+- Guest access available for unauthenticated users
+- Protected API routes — AI endpoints require a valid session
 
-### 5. **Export & Persistence**
+### 📤 Export
 
-- **Export SQL**: Generate `CREATE TABLE` statements
-- **Export Image**: Download diagram sebagai PNG
-- **Auto-save**: State tersimpan di localStorage
+- **Export SQL**: Download generated `CREATE TABLE` + `ALTER TABLE` statements as `.sql`
+- **Export Image**: Download the diagram as a PNG image
 
-### 6. **Theme & UX**
+### 🛡️ API Security
 
-- Dark/Light mode toggle (default: Dark)
-- Animasi smooth dengan Framer Motion
-- Responsive design dengan Tailwind CSS
+- **Rate Limiting**: AI generation endpoint is protected (10 req/min per IP)
+- **Input Validation**: Prompt and schema inputs are validated before processing
+- **AST-level SQL Filtering**: Only safe DDL statements pass through
 
 ## 🛠️ Tech Stack
 
-| Layer                | Teknologi                           |
-| -------------------- | ----------------------------------- |
-| **Framework**        | Next.js 15 (App Router)             |
-| **UI Library**       | React 18, TypeScript                |
-| **Styling**          | Tailwind CSS                        |
-| **State Management** | Zustand (dengan persist middleware) |
-| **Canvas**           | React Flow (@xyflow/react)          |
-| **Icons**            | Lucide React                        |
-| **Components**       | Radix UI (Dropdown, Tooltip)        |
-| **Animation**        | Framer Motion                       |
-| **Layout**           | Dagre (auto-layout)                 |
-| **Export**           | html-to-image                       |
+| Layer                | Technology                           |
+| -------------------- | ------------------------------------ |
+| **Framework**        | Next.js 15 (App Router)              |
+| **Language**         | TypeScript                           |
+| **UI Library**       | React 19                             |
+| **Styling**          | Tailwind CSS 3                       |
+| **State Management** | Zustand (with `persist` middleware)  |
+| **Canvas**           | React Flow (`@xyflow/react`)         |
+| **Code Editor**      | CodeMirror (`@uiw/react-codemirror`) |
+| **AI Provider**      | Groq SDK (LLaMA 3.3 70B Versatile)   |
+| **SQL Parser**       | `node-sql-parser` (AST validation)   |
+| **Authentication**   | NextAuth v5 (GitHub & Google OAuth)  |
+| **Icons**            | Lucide React                         |
+| **Components**       | Radix UI (Dialog, Dropdown, Tooltip) |
+| **Animation**        | Framer Motion                        |
+| **Layout Engine**    | Dagre (auto-layout)                  |
+| **Export**           | html-to-image                        |
+| **Notifications**    | Sonner (toast)                       |
+| **Markdown**         | react-markdown                       |
 
-## 📁 Struktur Proyek
+## 📁 Project Structure
 
 ```
 src/
-├── app/                    # Next.js App Router
-│   ├── layout.tsx         # Root layout
-│   ├── page.tsx           # Homepage
-│   └── globals.css        # Global styles
+├── app/                          # Next.js App Router
+│   ├── api/
+│   │   ├── ai/
+│   │   │   ├── generate/route.ts # AI SQL generation endpoint
+│   │   │   └── enhance/route.ts  # AI prompt enhancement endpoint
+│   │   └── auth/
+│   │       └── [...nextauth]/    # NextAuth route handler
+│   ├── login/page.tsx            # OAuth login page
+│   ├── layout.tsx                # Root layout (fonts, providers, toaster)
+│   ├── page.tsx                  # Main ERD editor page
+│   └── globals.css               # Global styles
 ├── components/
 │   ├── canvas/
-│   │   ├── ERDCanvas.tsx      # React Flow canvas
-│   │   ├── TableNode.tsx      # Custom table node
-│   │   ├── RelationshipEdge.tsx
-│   │   └── CanvasToolbar.tsx  # Floating toolbar
+│   │   ├── ERDCanvas.tsx         # React Flow canvas
+│   │   ├── TableNode.tsx         # Custom table node component
+│   │   ├── RelationshipEdge.tsx  # Custom edge component
+│   │   └── CanvasToolbar.tsx     # Floating toolbar (zoom, layout, etc.)
+│   ├── chat/
+│   │   └── ChatView.tsx          # AI chat interface
+│   ├── editor/
+│   │   └── SQLEditor.tsx         # CodeMirror SQL editor
 │   ├── layout/
-│   │   └── Header.tsx         # Top header (export, login)
-│   └── sidebar/
-│       ├── AIPanel.tsx        # AI prompt input
-│       └── HistoryPanel.tsx   # Prompt history
+│   │   ├── Header.tsx            # Top header bar
+│   │   ├── MainLayout.tsx        # Main layout with sidebar
+│   │   └── SplitView.tsx         # Visual/Code split view
+│   ├── sidebar/
+│   │   ├── Sidebar.tsx           # Sidebar container
+│   │   ├── ChatView.tsx          # Chat session view
+│   │   └── HistoryView.tsx       # Chat history view
+│   ├── providers/
+│   │   └── SessionProvider.tsx   # NextAuth session provider
+│   └── ui/
+│       ├── ErrorBoundary.tsx     # Error boundary wrapper
+│       ├── LoadingDots.tsx       # Loading animation
+│       └── tooltip.tsx           # Tooltip component
+├── lib/
+│   ├── groq.ts                   # Groq AI client, SQL generation & validation
+│   └── rate-limit.ts             # In-memory API rate limiter
 ├── store/
-│   └── erdStore.ts        # Zustand state management
+│   └── erdStore.ts               # Zustand store (nodes, edges, chat, settings)
 ├── types/
-│   └── erd.ts             # TypeScript interfaces
+│   └── erd.ts                    # TypeScript interfaces (Column, TableData, ChatMessage, ChatSession)
 ├── constants/
-│   └── dataTypes.ts       # SQL data types list
-└── utils/
-    └── sqlGenerator.ts    # SQL export logic
+│   ├── dataTypes.ts              # SQL data types definitions
+│   └── defaults.ts               # Default nodes and edges
+├── utils/
+│   ├── sqlGenerator.ts           # Client-side SQL export generator
+│   └── sqlParser.ts              # SQL-to-ERD parser
+├── hooks/                        # Custom React hooks
+└── auth.ts                       # NextAuth configuration (GitHub + Google)
 ```
 
-## 🚀 Cara Menjalankan
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- npm or yarn
+- Groq API Key ([Get one at console.groq.com](https://console.groq.com))
+- GitHub OAuth credentials ([Developer Settings](https://github.com/settings/developers))
+- Google OAuth credentials ([Google Cloud Console](https://console.cloud.google.com))
+
+### Installation
 
 ```bash
+# Clone the repository
+git clone <your-repo-url>
+cd erd
+
 # Install dependencies
 npm install
 
-# Development mode
+# Copy environment example
+cp .env.local.example .env.local
+```
+
+### Environment Variables
+
+Edit `.env.local` with your credentials:
+
+```env
+# AI Provider
+GROQ_API_KEY=your_groq_api_key
+
+# NextAuth
+AUTH_SECRET=generate_with_openssl_rand_base64_32
+AUTH_URL=http://localhost:3000
+
+# GitHub OAuth
+AUTH_GITHUB_ID=your_github_client_id
+AUTH_GITHUB_SECRET=your_github_client_secret
+
+# Google OAuth
+AUTH_GOOGLE_ID=your_google_client_id
+AUTH_GOOGLE_SECRET=your_google_client_secret
+```
+
+### Running the App
+
+```bash
+# Development
 npm run dev
 
 # Production build
@@ -106,52 +188,57 @@ npm run build
 npm start
 ```
 
-Akses aplikasi di `http://localhost:3000`
+Open [http://localhost:3000](http://localhost:3000) to start designing.
 
 ## 💾 Data Model
 
-### Column Interface
-
 ```typescript
-{
+interface Column {
   id: string;
   name: string;
-  type: string;           // varchar, int, uuid, dll
-  length?: string;        // 255, 10,2, dll
+  type: string; // varchar, int, uuid, etc.
+  length?: string; // 255, 10, etc.
   isPrimaryKey: boolean;
   isForeignKey: boolean;
   isNullable: boolean;
 }
-```
 
-### TableData Interface
-
-```typescript
-{
-  label: string;          // Nama tabel
+interface TableData {
+  label: string; // Table name
   columns: Column[];
+  headerColor?: string;
+  animationDelay?: number;
+}
+
+interface ChatMessage {
+  id: string;
+  role: "user" | "system";
+  content: string;
+  timestamp: number;
+}
+
+interface ChatSession {
+  id: string;
+  title: string;
+  timestamp: number;
+  preview: string;
+  messages: ChatMessage[];
 }
 ```
 
-## 🎨 Design Highlights
+## 🎨 Design
 
-- **Modern UI**: Glassmorphism, gradient accents, smooth transitions
-- **Dark-first**: Optimized untuk dark mode dengan light mode support
-- **Premium Feel**: Micro-animations, hover effects, shadow layers
-- **Accessibility**: Keyboard shortcuts, tooltips, semantic HTML
+- **Dark-first UI** with a modern, premium aesthetic
+- **Glassmorphism** cards and subtle gradients
+- **Micro-animations** powered by Framer Motion
+- **Typography**: Inter (sans-serif) + JetBrains Mono (code)
+- **Responsive layout** with collapsible sidebar
 
-## 📝 Catatan Pengembangan
+## 📄 License
 
-- **AI Generation**: Saat ini masih simulasi (template-based), bisa diintegrasikan dengan LLM API
-- **Collaboration**: Belum ada fitur real-time collaboration
-- **Authentication**: Login button masih placeholder
-- **Cloud Sync**: Data hanya tersimpan di localStorage
-
-## 📄 Lisensi
-
-Project ini dibuat untuk keperluan pembelajaran dan pengembangan.
+This project is built for learning and development purposes.
 
 ---
 
-**Versi**: 1.0.0  
-**Terakhir diupdate**: Februari 2026
+**Version**: 2.0.0
+**Last updated**: February 2026
