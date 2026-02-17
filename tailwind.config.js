@@ -20,7 +20,7 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["Inter", "sans-serif"],
+        sans: ["var(--font-satoshi)", "Inter", "sans-serif"],
         mono: ["JetBrains Mono", "monospace"],
       },
     },
