@@ -3,6 +3,7 @@
 import { useERDStore } from "@/store/erdStore";
 import { HistoryView } from "./HistoryView";
 import { ChatView } from "./ChatView";
+import { ValidationPanel } from "./ValidationPanel";
 import {
   PanelLeftClose,
   PanelLeftOpen,
@@ -12,6 +13,7 @@ import {
   Settings,
   LogOut,
   User,
+  ShieldCheck,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useSession, signOut } from "next-auth/react";
@@ -26,6 +28,7 @@ import {
 
 import { SQLEditor } from "../editor/SQLEditor";
 import { Code } from "lucide-react";
+import { useERDValidation } from "@/hooks/useERDValidation";
 
 export function Sidebar() {
   const sidebarOpen = useERDStore((state) => state.sidebarOpen);
@@ -38,6 +41,8 @@ export function Sidebar() {
   const setSidebarMode = useERDStore((state) => state.setSidebarMode);
 
   const { data: session } = useSession();
+  const { errorCount, warningCount } = useERDValidation();
+  const totalIssues = errorCount + warningCount;
 
   return (
     <aside
@@ -80,7 +85,7 @@ export function Sidebar() {
       {/* Unified Tab Switcher (Only in Chat Mode) */}
       <div
         className={clsx(
-          "flex items-center p-2 gap-1 border-b border-border bg-sidebar shrink-0 overflow-hidden transition-all duration-300",
+          "flex items-center p-2 gap-1 border-b border-border bg-sidebar shrink-0 overflow-hidden transition-all duration-200 ease-in-out",
           sidebarOpen && currentView === "chat"
             ? "opacity-100 max-h-[53px]"
             : "opacity-0 max-h-0 py-0 border-none",
@@ -109,6 +114,31 @@ export function Sidebar() {
         >
           <Code className="w-4 h-4" />
           Editor
+        </button>
+        <button
+          onClick={() => setSidebarMode("validation")}
+          className={clsx(
+            "flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap relative",
+            sidebarMode === "validation"
+              ? "bg-primary/10 text-primary shadow-sm"
+              : "text-text-secondary hover:text-text-primary hover:bg-white/5",
+          )}
+        >
+          <ShieldCheck className="w-4 h-4" />
+          Validasi
+          {/* Badge for issues */}
+          {totalIssues > 0 && (
+            <span
+              className={clsx(
+                "absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold flex items-center justify-center",
+                errorCount > 0
+                  ? "bg-red-500 text-white"
+                  : "bg-amber-500 text-white",
+              )}
+            >
+              {totalIssues}
+            </span>
+          )}
         </button>
       </div>
 
@@ -146,6 +176,35 @@ export function Sidebar() {
               </TooltipTrigger>
               <TooltipContent side="right">New Chat</TooltipContent>
             </Tooltip>
+
+            {/* Validation shortcut in collapsed mode */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => {
+                    setSidebarOpen(true);
+                    setCurrentView("chat");
+                    setSidebarMode("validation");
+                  }}
+                  className="relative p-2 text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg transition-colors"
+                >
+                  <ShieldCheck className="w-5 h-5" />
+                  {totalIssues > 0 && (
+                    <span
+                      className={clsx(
+                        "absolute top-0.5 right-0.5 min-w-[14px] h-3.5 px-0.5 rounded-full text-[8px] font-bold flex items-center justify-center",
+                        errorCount > 0
+                          ? "bg-red-500 text-white"
+                          : "bg-amber-500 text-white",
+                      )}
+                    >
+                      {totalIssues}
+                    </span>
+                  )}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Validasi Schema</TooltipContent>
+            </Tooltip>
           </TooltipProvider>
         </div>
       )}
@@ -154,17 +213,15 @@ export function Sidebar() {
       <div className="flex-1 overflow-hidden relative">
         <div
           className={clsx(
-            "absolute inset-0 transition-opacity duration-300",
+            "absolute inset-0 transition-opacity duration-200 ease-in-out",
             sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none",
           )}
         >
           {/* History View Layer (Always on top if active) */}
           <div
             className={clsx(
-              "absolute inset-0 flex flex-col bg-sidebar transition-all duration-300",
-              currentView === "history"
-                ? "opacity-100 z-20 translate-x-0"
-                : "opacity-0 pointer-events-none -translate-x-4",
+              "absolute inset-0 flex flex-col bg-sidebar transition-transform duration-200 ease-in-out",
+              currentView === "history" ? "translate-x-0" : "-translate-x-full",
             )}
           >
             <HistoryView />
@@ -173,13 +230,13 @@ export function Sidebar() {
           {/* Chat View Layer */}
           <div
             className={clsx(
-              "absolute inset-0 flex flex-col bg-sidebar transition-transform duration-300 ease-in-out backface-hidden",
+              "absolute inset-0 flex flex-col bg-sidebar transition-transform duration-200 ease-in-out",
               currentView === "chat"
                 ? sidebarMode === "chat"
                   ? "translate-x-0"
                   : "-translate-x-full"
-                : "translate-x-0", // Default position when covered by history
-              currentView !== "chat" && "opacity-0 pointer-events-none", // Hide when in history
+                : "translate-x-0",
+              currentView !== "chat" && "opacity-0 pointer-events-none",
             )}
           >
             <ChatView />
@@ -192,12 +249,29 @@ export function Sidebar() {
               currentView === "chat"
                 ? sidebarMode === "editor"
                   ? "translate-x-0"
-                  : "translate-x-full"
-                : "translate-x-full", // Default position when covered by history
-              currentView !== "chat" && "opacity-0 pointer-events-none", // Hide when in history
+                  : sidebarMode === "validation"
+                    ? "-translate-x-full"
+                    : "translate-x-full"
+                : "translate-x-full",
+              currentView !== "chat" && "opacity-0 pointer-events-none",
             )}
           >
             <SQLEditor />
+          </div>
+
+          {/* Validation View Layer */}
+          <div
+            className={clsx(
+              "absolute inset-0 flex flex-col bg-sidebar transition-transform duration-300 ease-in-out",
+              currentView === "chat"
+                ? sidebarMode === "validation"
+                  ? "translate-x-0"
+                  : "translate-x-full"
+                : "translate-x-full",
+              currentView !== "chat" && "opacity-0 pointer-events-none",
+            )}
+          >
+            <ValidationPanel />
           </div>
         </div>
       </div>

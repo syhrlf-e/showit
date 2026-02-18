@@ -170,7 +170,14 @@ export function Header() {
                 </div>
                 <DropdownMenu.Separator className="h-px bg-border my-1" />
                 <DropdownMenu.Item
-                  onSelect={() => signOut()}
+                  onSelect={() => {
+                    // Clear ERD storage on logout
+                    if (typeof window !== "undefined") {
+                      localStorage.removeItem("erd-storage-mysql");
+                      sessionStorage.removeItem("erd-storage-mysql");
+                    }
+                    signOut();
+                  }}
                   className="flex items-center gap-2 px-2 py-1.5 text-sm rounded-lg outline-none cursor-pointer hover:bg-red-500/10 text-red-400 hover:text-red-400"
                 >
                   <LogOut className="w-4 h-4" />

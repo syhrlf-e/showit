@@ -28,4 +28,8 @@ export interface ChatSession {
   timestamp: number;
   preview: string;
   messages: ChatMessage[];
+  // Canvas state
+  nodes: any[]; // Node<TableData>[] - using any to avoid circular dependency
+  edges: any[]; // Edge[] - using any to avoid circular dependency
+  sqlCode: string;
 }

@@ -10,6 +10,10 @@ import {
   User,
   ChevronDown,
   ChevronUp,
+  Copy,
+  Pencil,
+  Check,
+  GitBranch,
 } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { clsx } from "clsx";
@@ -21,11 +25,13 @@ export function ChatView() {
   const setCurrentView = useERDStore((state) => state.setCurrentView);
   const [prompt, setPrompt] = useState("");
   const [mode, setMode] = useState<"natural" | "sql">("natural");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const { generate } = useAIGenerate();
+  const { generate, suggestRelations, isSuggesting } = useAIGenerate();
   const { enhancePrompt, isEnhancing } = useEnhancePrompt();
+  const nodes = useERDStore((state) => state.nodes);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -73,6 +79,24 @@ export function ChatView() {
     e.target.style.height = `${e.target.scrollHeight}px`;
   };
 
+  const handleCopy = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleEditStart = (text: string) => {
+    setPrompt(text);
+    // Auto-resize textarea
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.style.height = "auto";
+        textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+        textareaRef.current.focus();
+      }
+    }, 0);
+  };
+
   return (
     <div className="flex flex-col h-full bg-sidebar">
       {/* Header */}
@@ -96,7 +120,6 @@ export function ChatView() {
       >
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center opacity-50">
-            <Bot className="w-8 h-8 mb-2" />
             <p className="text-sm">Start chatting to build your ERD</p>
           </div>
         ) : (
@@ -104,24 +127,10 @@ export function ChatView() {
             <div
               key={msg.id}
               className={clsx(
-                "flex gap-3 text-sm",
-                msg.role === "user" ? "flex-row-reverse" : "flex-row",
+                "flex flex-col gap-1.5 text-sm group",
+                msg.role === "user" ? "items-end" : "items-start",
               )}
             >
-              <div
-                className={clsx(
-                  "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
-                  msg.role === "user"
-                    ? "bg-primary/20 text-primary"
-                    : "bg-white/10 text-white",
-                )}
-              >
-                {msg.role === "user" ? (
-                  <User className="w-4 h-4" />
-                ) : (
-                  <Bot className="w-4 h-4" />
-                )}
-              </div>
               <div
                 className={clsx(
                   "rounded-2xl px-4 py-2.5 max-w-[85%] leading-relaxed",
@@ -132,6 +141,37 @@ export function ChatView() {
               >
                 <ReactMarkdown>{msg.content}</ReactMarkdown>
               </div>
+
+              {/* Action buttons below bubble for user messages */}
+              {msg.role === "user" && (
+                <div className="flex items-center gap-2 px-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => handleCopy(msg.content, msg.id)}
+                    className="flex items-center gap-1 px-2 py-0.5 text-xs text-text-secondary hover:text-text-primary hover:bg-white/5 rounded transition-colors"
+                    title="Copy"
+                  >
+                    {copiedId === msg.id ? (
+                      <>
+                        <Check className="w-3 h-3 text-green-400" />
+                        <span className="text-green-400">Copied</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3 h-3" />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => handleEditStart(msg.content)}
+                    className="flex items-center gap-1 px-2 py-0.5 text-xs text-text-secondary hover:text-text-primary hover:bg-white/5 rounded transition-colors"
+                    title="Edit"
+                  >
+                    <Pencil className="w-3 h-3" />
+                    <span>Edit</span>
+                  </button>
+                </div>
+              )}
             </div>
           ))
         )}
@@ -204,6 +244,23 @@ export function ChatView() {
                     <Sparkles className="w-3 h-3" />
                   )}
                   Enhance
+                </button>
+              )}
+
+              {/* Suggest Relations button - only show when there are tables */}
+              {nodes.length > 0 && (
+                <button
+                  onClick={suggestRelations}
+                  disabled={isSuggesting || isGenerating}
+                  className="flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium text-emerald-400 hover:text-emerald-300 hover:bg-emerald-400/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Ask AI to suggest missing relations"
+                >
+                  {isSuggesting ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <GitBranch className="w-3 h-3" />
+                  )}
+                  Suggest
                 </button>
               )}
             </div>

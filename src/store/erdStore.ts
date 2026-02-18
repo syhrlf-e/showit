@@ -31,6 +31,10 @@ interface ERDState {
   onNodesChange: OnNodesChange<Node<TableData>>;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
+  addEdgeWithType: (
+    connection: Connection,
+    relationType: "1:1" | "1:N" | "N:M",
+  ) => void;
   addNode: (node: Node<TableData>) => void;
   updateNode: (id: string, data: Partial<TableData>) => void;
   deleteNode: (id: string) => void;
@@ -50,6 +54,7 @@ interface ERDState {
   setCurrentView: (view: "history" | "chat") => void;
   currentChatId: string | null;
   sessions: ChatSession[];
+  saveCurrentSession: () => void;
   createNewChat: () => void;
   loadSession: (sessionId: string) => void;
   deleteSession: (sessionId: string) => void;
@@ -63,8 +68,8 @@ interface ERDState {
   toggleTheme: () => void;
 
   // Unified Sidebar Mode
-  sidebarMode: "chat" | "editor";
-  setSidebarMode: (mode: "chat" | "editor") => void;
+  sidebarMode: "chat" | "editor" | "validation";
+  setSidebarMode: (mode: "chat" | "editor" | "validation") => void;
 
   // SQL Editor State
   sqlMode: "visual" | "code";
@@ -93,7 +98,35 @@ export const useERDStore = create<ERDState>()(
       pendingSQL: null,
       setPendingSQL: (code) => set({ pendingSQL: code }),
 
+      // Helper: Save current session state before switching
+      saveCurrentSession: () => {
+        const state = get();
+        if (!state.currentChatId) return;
+
+        set({
+          sessions: state.sessions.map((session) =>
+            session.id === state.currentChatId
+              ? {
+                  ...session,
+                  messages: state.messages,
+                  nodes: state.nodes,
+                  edges: state.edges,
+                  sqlCode: state.sqlCode,
+                  timestamp: Date.now(),
+                }
+              : session,
+          ),
+        });
+      },
+
       createNewChat: () => {
+        // 1. Save current session state before clearing
+        const state = get();
+        if (state.currentChatId) {
+          get().saveCurrentSession();
+        }
+
+        // 2. Create new session
         const newSessionId = crypto.randomUUID();
         const newSession: ChatSession = {
           id: newSessionId,
@@ -101,65 +134,44 @@ export const useERDStore = create<ERDState>()(
           timestamp: Date.now(),
           preview: "Empty conversation",
           messages: [],
+          nodes: [],
+          edges: [],
+          sqlCode: "",
         };
+
+        // 3. Clear canvas and set new session
         set((state) => ({
           sessions: [newSession, ...state.sessions],
           currentChatId: newSessionId,
           messages: [],
-          nodes: [], // Clear canvas
-          edges: [], // Clear canvas
+          nodes: [],
+          edges: [],
+          sqlCode: "",
+          pendingSQL: null,
           currentView: "chat",
         }));
       },
 
       loadSession: (sessionId) => {
+        // 1. Save current session before switching
+        const currentState = get();
+        if (currentState.currentChatId) {
+          get().saveCurrentSession();
+        }
+
+        // 2. Find and load target session
         const session = get().sessions.find((s) => s.id === sessionId);
         if (session) {
-          // 1. Set basic session state
+          // 3. Restore full state from session
           set({
             currentChatId: sessionId,
             messages: session.messages,
+            nodes: session.nodes || [],
+            edges: session.edges || [],
+            sqlCode: session.sqlCode || "",
+            pendingSQL: null,
             currentView: "chat",
           });
-
-          // 2. Find last SQL code in messages to restore canvas
-          const lastSqlMessage = [...session.messages]
-            .reverse()
-            .find(
-              (m) =>
-                m.role === "assistant" && m.content.includes("CREATE TABLE"),
-            );
-
-          if (lastSqlMessage) {
-            // Extract SQL from code block
-            const sqlMatch = lastSqlMessage.content.match(
-              /```sql\n([\s\S]*?)\n```/,
-            );
-            if (sqlMatch && sqlMatch[1]) {
-              const sql = sqlMatch[1];
-
-              // 3. Update SQL Editor
-              set({ sqlCode: sql });
-
-              // 4. Update Canvas (Parse SQL)
-              const { nodes, edges } = parseSQLToERD(sql);
-
-              // Force a state update with new object references to ensure React Flow detects changes
-              set({
-                nodes: [...nodes],
-                edges: [...edges],
-                // Ensure layout is triggered after state update
-              });
-
-              // 5. Layout nodes for better visibility (delayed slightly to allow render)
-              setTimeout(() => {
-                get().layoutNodes();
-              }, 50);
-            }
-          } else {
-            // If no SQL found, clear canvas/editor to avoid ghost states
-            set({ sqlCode: "", nodes: [], edges: [] });
-          }
         }
       },
 
@@ -190,6 +202,9 @@ export const useERDStore = create<ERDState>()(
             timestamp: Date.now(),
             preview: message.content.slice(0, 50),
             messages: [message],
+            nodes: [],
+            edges: [],
+            sqlCode: "",
           };
           newSessions = [newSession, ...newSessions];
         } else {
@@ -256,7 +271,27 @@ export const useERDStore = create<ERDState>()(
           ...connection,
           id: `e${connection.source}-${connection.target}-${Date.now()}`,
           type: "relationship",
-          data: { label: "has many", type: "1:N" },
+          data: { label: "1 to many", type: "1:N" },
+          markerEnd: { type: MarkerType.ArrowClosed },
+        };
+        set({
+          edges: addEdge(edge, get().edges),
+        });
+      },
+      addEdgeWithType: (
+        connection: Connection,
+        relationType: "1:1" | "1:N" | "N:M",
+      ) => {
+        const labelMap = {
+          "1:1": "one to one",
+          "1:N": "one to many",
+          "N:M": "many to many",
+        };
+        const edge: Edge = {
+          ...connection,
+          id: `e${connection.source}-${connection.target}-${Date.now()}`,
+          type: "relationship",
+          data: { label: labelMap[relationType], type: relationType },
           markerEnd: { type: MarkerType.ArrowClosed },
         };
         set({
@@ -345,8 +380,33 @@ export const useERDStore = create<ERDState>()(
       },
       layoutNodes: () => {
         const { nodes, edges } = get();
+        if (nodes.length === 0) return;
+
+        // If no edges (disconnected tables), use a clean grid layout
+        if (edges.length === 0) {
+          const COLS = Math.ceil(Math.sqrt(nodes.length)); // e.g. 5 tables → 3 cols
+          const COL_WIDTH = 300;
+          const ROW_HEIGHT = 350;
+
+          set({
+            nodes: nodes.map((node, index) => ({
+              ...node,
+              position: {
+                x: (index % COLS) * COL_WIDTH + 50,
+                y: Math.floor(index / COLS) * ROW_HEIGHT + 50,
+              },
+            })),
+          });
+          return;
+        }
+
+        // If edges exist, use dagre for relationship-aware layout
         const g = new dagre.graphlib.Graph();
-        g.setGraph({ rankdir: "LR" });
+        g.setGraph({
+          rankdir: "LR",
+          nodesep: 80,
+          ranksep: 250,
+        });
         g.setDefaultEdgeLabel(() => ({}));
 
         nodes.forEach((node) => {
@@ -402,12 +462,17 @@ export const useERDStore = create<ERDState>()(
           const mergedNodes = [...currentNodes];
           let newNodesCount = 0;
 
+          // Map: parser node ID → final merged node ID
+          const idRemap: Record<string, string> = {};
+
           newNodes.forEach((newNode) => {
             const existingNodeIndex = mergedNodes.findIndex(
               (n) => n.data.label === newNode.data.label,
             );
 
             if (existingNodeIndex !== -1) {
+              // Existing node: remap parser ID → existing ID
+              idRemap[newNode.id] = mergedNodes[existingNodeIndex].id;
               mergedNodes[existingNodeIndex] = {
                 ...mergedNodes[existingNodeIndex],
                 data: {
@@ -416,6 +481,8 @@ export const useERDStore = create<ERDState>()(
                 },
               };
             } else {
+              // New node: keep parser ID, remap to itself
+              idRemap[newNode.id] = newNode.id;
               mergedNodes.push({
                 ...newNode,
                 data: {
@@ -427,17 +494,24 @@ export const useERDStore = create<ERDState>()(
             }
           });
 
+          // Remap edges to use correct merged node IDs
           const mergedEdges = [...currentEdges];
-
           newEdges.forEach((newEdge) => {
+            const remappedSource = idRemap[newEdge.source] ?? newEdge.source;
+            const remappedTarget = idRemap[newEdge.target] ?? newEdge.target;
+
             const exists = mergedEdges.some(
               (e) =>
-                (e.source === newEdge.source && e.target === newEdge.target) ||
-                (e.source === newEdge.target && e.target === newEdge.source),
+                (e.source === remappedSource && e.target === remappedTarget) ||
+                (e.source === remappedTarget && e.target === remappedSource),
             );
 
             if (!exists) {
-              mergedEdges.push(newEdge);
+              mergedEdges.push({
+                ...newEdge,
+                source: remappedSource,
+                target: remappedTarget,
+              });
             }
           });
 
@@ -447,7 +521,10 @@ export const useERDStore = create<ERDState>()(
             isGenerating: false,
           });
 
-          get().layoutNodes();
+          // Delay layout to ensure React Flow has rendered the nodes
+          setTimeout(() => {
+            get().layoutNodes();
+          }, 100);
 
           toast.success(`Imported ${newNodes.length} tables successfully`);
         } catch (error) {
@@ -511,6 +588,36 @@ export const useERDStore = create<ERDState>()(
     }),
     {
       name: "erd-storage-mysql",
+      storage: {
+        getItem: (name) => {
+          // Dynamically choose storage based on auth
+          const hasAuth =
+            typeof window !== "undefined" &&
+            Object.keys(localStorage).some((key) =>
+              key.startsWith("next-auth"),
+            );
+          const storage = hasAuth ? localStorage : sessionStorage;
+          const str = storage.getItem(name);
+          return str ? JSON.parse(str) : null;
+        },
+        setItem: (name, value) => {
+          // Dynamically choose storage based on auth
+          const hasAuth =
+            typeof window !== "undefined" &&
+            Object.keys(localStorage).some((key) =>
+              key.startsWith("next-auth"),
+            );
+          const storage = hasAuth ? localStorage : sessionStorage;
+          storage.setItem(name, JSON.stringify(value));
+        },
+        removeItem: (name) => {
+          // Clear from both storages
+          if (typeof window !== "undefined") {
+            localStorage.removeItem(name);
+            sessionStorage.removeItem(name);
+          }
+        },
+      },
     },
   ),
 );

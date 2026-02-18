@@ -67,13 +67,21 @@ SYNTAX RULES:
 - Use standard MySQL syntax compatible with SQL parsers.
 - Every table MUST have a PRIMARY KEY (usually \`id INT AUTO_INCREMENT PRIMARY KEY\`).
 - Use appropriate types: INT, BIGINT, VARCHAR(n), TEXT, DATETIME, TIMESTAMP, DECIMAL(p,s), TINYINT, JSON.
-- Define FOREIGN KEY constraints inline: \`column_name INT, FOREIGN KEY (column_name) REFERENCES other_table(id)\`.
+- ALWAYS define FOREIGN KEY constraints for related tables: \`FOREIGN KEY (column_name) REFERENCES other_table(id)\`.
 - Use naming convention: table names in snake_case plural (users, blog_posts), columns in snake_case.
 - Include common columns where appropriate: \`id\`, \`created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\`.
 
+RELATIONSHIP RULES (CRITICAL):
+- ALWAYS identify and create relationships between tables using FOREIGN KEY constraints.
+- For every table that references another, add the FK column AND the FOREIGN KEY constraint.
+- Order tables so referenced tables come BEFORE tables that reference them.
+- Common patterns to always include:
+  * User-owned resources: add \`user_id INT NOT NULL, FOREIGN KEY (user_id) REFERENCES users(id)\`
+  * Parent-child: add \`parent_id INT, FOREIGN KEY (parent_id) REFERENCES parent_table(id)\`
+  * Many-to-many: create a junction table with two FK columns
+
 BEHAVIOR RULES:
 - If the request is vague (e.g., "blog system"), design a complete normalized schema with all necessary tables and relationships.
-- If the request is non-database related, still respond with a CREATE TABLE that best interprets the user's intent.
 - Always follow normalization best practices (3NF minimum).
 - When a current schema is provided, preserve existing tables and only add/modify what the user asked for.
 
@@ -148,4 +156,54 @@ async function callGroq(
   });
 
   return completion.choices[0]?.message?.content || "";
+}
+
+/**
+ * Analyze existing schema and suggest missing relations as JSON
+ */
+export async function suggestRelationsFromSchema(
+  currentSchema: string,
+): Promise<
+  {
+    source: string;
+    target: string;
+    type: "1:1" | "1:N" | "N:M";
+    reason: string;
+  }[]
+> {
+  if (!process.env.GROQ_API_KEY) {
+    throw new Error("GROQ_API_KEY is missing.");
+  }
+
+  const systemPrompt = `
+You are a database relationship expert. Analyze a MySQL schema and suggest missing FOREIGN KEY relationships.
+
+OUTPUT FORMAT (STRICT JSON ONLY):
+Return a JSON array. Each item must have:
+- source: string (table name that has the FK)
+- target: string (table name being referenced)
+- type: "1:1" | "1:N" | "N:M"
+- reason: string (short explanation, max 10 words)
+
+RULES:
+- Only suggest relations NOT already defined in the schema.
+- Detect by column naming patterns: id_X or X_id usually references table X.
+- Only output the JSON array, no markdown, no explanation.
+- If no missing relations found, return empty array: []
+
+EXAMPLE OUTPUT:
+[
+  {"source": "orders", "target": "customers", "type": "1:N", "reason": "orders belong to a customer"},
+  {"source": "order_items", "target": "products", "type": "1:N", "reason": "items reference a product"}
+]
+`.trim();
+
+  try {
+    const result = await callGroq(systemPrompt, `Schema:\n${currentSchema}`);
+    const jsonMatch = result.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) return [];
+    return JSON.parse(jsonMatch[0]);
+  } catch {
+    return [];
+  }
 }

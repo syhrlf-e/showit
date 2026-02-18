@@ -324,23 +324,34 @@ const ColumnRow = ({
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -10 }}
-      className="flex items-center justify-between px-2 py-1 hover:bg-white/5 rounded group transition-colors cursor-pointer relative"
-    >
+    <div className="flex items-center justify-between px-2 py-1 hover:bg-white/5 rounded group transition-colors cursor-pointer relative">
       <Handle
         id={`target-${column.id}`}
         type="target"
         position={Position.Left}
-        className="opacity-0 group-hover:opacity-100 !w-2 !h-2 !bg-primary !border-none transition-opacity !-left-1"
+        className={clsx(
+          "!w-2.5 !h-2.5 !rounded-full !border-2 !transition-all !duration-150",
+          column.isPrimaryKey
+            ? "!bg-amber-400 !border-amber-500/70"
+            : column.isForeignKey
+              ? "!bg-primary !border-primary/70"
+              : "!bg-transparent !border-border hover:!bg-primary/50 hover:!border-primary",
+          "!-left-[5px]",
+        )}
       />
       <Handle
         id={`source-${column.id}`}
         type="source"
         position={Position.Right}
-        className="opacity-0 group-hover:opacity-100 !w-2 !h-2 !bg-primary !border-none transition-opacity !-right-1"
+        className={clsx(
+          "!w-2.5 !h-2.5 !rounded-full !border-2 !transition-all !duration-150",
+          column.isPrimaryKey
+            ? "!bg-amber-400 !border-amber-500/70"
+            : column.isForeignKey
+              ? "!bg-primary !border-primary/70"
+              : "!bg-transparent !border-border hover:!bg-primary/50 hover:!border-primary",
+          "!-right-[5px]",
+        )}
       />
       <div
         className="flex items-center gap-2 flex-1"
@@ -399,6 +410,6 @@ const ColumnRow = ({
           <X className="w-3 h-3" />
         </button>
       </div>
-    </motion.div>
+    </div>
   );
 };
