@@ -56,8 +56,8 @@ export function useAIGenerate() {
           id: processingMessageId,
           role: "assistant",
           content: isIndonesian
-            ? "⏳ Sedang membuat SQL schema..."
-            : "⏳ Generating SQL schema...",
+            ? "Sedang membuat SQL schema..."
+            : "Generating SQL schema...",
           timestamp: Date.now(),
         });
 
