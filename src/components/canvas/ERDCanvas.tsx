@@ -5,9 +5,10 @@ import {
   ReactFlow,
   Background,
   type NodeTypes,
-  type EdgeTypes,
+  EdgeTypes,
   ConnectionMode,
   type Connection,
+  ConnectionLineType,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { TableNode } from "./TableNode";
@@ -105,6 +106,8 @@ export function ERDCanvas() {
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
         colorMode={theme}
         connectionMode={ConnectionMode.Loose}
+        connectionLineType={ConnectionLineType.SmoothStep}
+        connectionLineStyle={{ stroke: "#10b981", strokeWidth: 2 }}
         className="bg-background"
         minZoom={0.1}
         maxZoom={2}

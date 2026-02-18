@@ -11,7 +11,7 @@ import {
   Settings,
 } from "lucide-react";
 import { useERDStore } from "@/store/erdStore";
-import { generateSQL } from "@/utils/sqlGenerator";
+import { generateSchema } from "@/utils/schemaGenerator";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { toPng } from "html-to-image";
 import { useSession, signOut } from "next-auth/react";
@@ -33,17 +33,24 @@ export function Header() {
   const currentSession = sessions.find((s) => s.id === currentChatId);
   const title = currentSession?.title || "Untitlted Conversation";
 
-  const handleExportSQL = () => {
-    const sql = generateSQL(nodes, edges);
-    const blob = new Blob([sql], { type: "text/plain" });
+  const handleExportSchema = (
+    format: "mysql" | "postgresql" | "mongodb" | "json",
+  ) => {
+    const content = generateSchema(nodes, edges, format);
+    const extension =
+      format === "json" ? "json" : format === "mongodb" ? "js" : "sql";
+    const mimeType = format === "json" ? "application/json" : "text/plain";
+
+    const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "schema.sql";
+    a.download = `schema.${extension}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    toast.success(`Exported to ${format.toUpperCase()}`);
   };
 
   const handleExportImage = async () => {
@@ -70,7 +77,24 @@ export function Header() {
     reader.onload = (event) => {
       const content = event.target?.result as string;
       if (content) {
-        importSQL(content);
+        // If JSON, load state directly?
+        // Current implementation expects SQL for import.
+        // For now, keep import as SQL only or try to detect.
+        // If file extension is .json, maybe try to parse as state?
+        if (file.name.endsWith(".json")) {
+          try {
+            const state = JSON.parse(content);
+            if (state.nodes && state.edges) {
+              useERDStore.setState({ nodes: state.nodes, edges: state.edges });
+              toast.success("Imported JSON state");
+            }
+          } catch (e) {
+            toast.error("Failed to parse JSON");
+          }
+        } else {
+          importSQL(content);
+        }
+
         if (fileInputRef.current) {
           fileInputRef.current.value = "";
         }
@@ -93,7 +117,7 @@ export function Header() {
         {/* Import */}
         <input
           type="file"
-          accept=".sql"
+          accept=".sql,.json"
           ref={fileInputRef}
           className="hidden"
           onChange={handleFileChange}
@@ -117,12 +141,42 @@ export function Header() {
           </DropdownMenu.Trigger>
           <DropdownMenu.Portal>
             <DropdownMenu.Content className="z-50 min-w-[160px] bg-card border border-border rounded-lg shadow-xl p-1 animate-in fade-in zoom-in-95 duration-100 mr-4">
+              <DropdownMenu.Label className="px-2 py-1.5 text-xs font-semibold text-text-secondary">
+                Database Schema
+              </DropdownMenu.Label>
               <DropdownMenu.Item
-                onSelect={handleExportSQL}
+                onSelect={() => handleExportSchema("mysql")}
+                className="flex items-center gap-2 px-2 py-2 text-sm rounded-md outline-none cursor-pointer hover:bg-primary/10 text-text-primary group transition-colors"
+              >
+                <div className="font-mono text-xs text-blue-400 w-5">MY</div>
+                MySQL
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                onSelect={() => handleExportSchema("postgresql")}
+                className="flex items-center gap-2 px-2 py-2 text-sm rounded-md outline-none cursor-pointer hover:bg-primary/10 text-text-primary group transition-colors"
+              >
+                <div className="font-mono text-xs text-blue-300 w-5">PG</div>
+                PostgreSQL
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                onSelect={() => handleExportSchema("mongodb")}
+                className="flex items-center gap-2 px-2 py-2 text-sm rounded-md outline-none cursor-pointer hover:bg-primary/10 text-text-primary group transition-colors"
+              >
+                <div className="font-mono text-xs text-green-400 w-5">DB</div>
+                MongoDB
+              </DropdownMenu.Item>
+
+              <DropdownMenu.Separator className="h-px bg-border my-1" />
+
+              <DropdownMenu.Label className="px-2 py-1.5 text-xs font-semibold text-text-secondary">
+                Other Formats
+              </DropdownMenu.Label>
+              <DropdownMenu.Item
+                onSelect={() => handleExportSchema("json")}
                 className="flex items-center gap-2 px-2 py-2 text-sm rounded-md outline-none cursor-pointer hover:bg-primary/10 text-text-primary group transition-colors"
               >
                 <FileJson className="w-4 h-4 text-text-secondary group-hover:text-primary" />
-                Export SQL
+                JSON State
               </DropdownMenu.Item>
               <DropdownMenu.Item
                 onSelect={handleExportImage}

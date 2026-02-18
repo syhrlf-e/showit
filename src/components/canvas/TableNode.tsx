@@ -87,7 +87,7 @@ export const TableNode = memo(
           delay: data.animationDelay || 0,
         }}
         className={clsx(
-          "bg-card border rounded-lg shadow-lg min-w-[240px] overflow-hidden transition-all",
+          "bg-card border rounded-lg shadow-lg min-w-[240px] transition-all",
           selected
             ? "border-primary ring-2 ring-primary/20"
             : "border-border hover:border-primary/50",
@@ -95,7 +95,7 @@ export const TableNode = memo(
       >
         <div
           className={clsx(
-            "px-4 py-3 border-b flex items-center justify-between group transition-colors",
+            "px-4 py-3 border-b flex items-center justify-between group transition-colors rounded-t-lg",
             data.headerColor ? data.headerColor : "bg-sidebar border-border",
           )}
         >
@@ -336,8 +336,9 @@ const ColumnRow = ({
             : column.isForeignKey
               ? "!bg-primary !border-primary/70"
               : "!bg-transparent !border-border hover:!bg-primary/50 hover:!border-primary",
-          "!-left-[5px]",
+          "!-left-[13px] z-50",
         )}
+        style={{ top: "50%", transform: "translateY(-50%)" }}
       />
       <Handle
         id={`source-${column.id}`}
@@ -350,8 +351,9 @@ const ColumnRow = ({
             : column.isForeignKey
               ? "!bg-primary !border-primary/70"
               : "!bg-transparent !border-border hover:!bg-primary/50 hover:!border-primary",
-          "!-right-[5px]",
+          "!-right-[13px] z-50",
         )}
+        style={{ top: "50%", transform: "translateY(-50%)" }}
       />
       <div
         className="flex items-center gap-2 flex-1"

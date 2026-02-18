@@ -100,8 +100,7 @@ export function Sidebar() {
               : "text-text-secondary hover:text-text-primary hover:bg-white/5",
           )}
         >
-          <MessageSquare className="w-4 h-4" />
-          AI Chat
+          Smart Chat
         </button>
         <button
           onClick={() => setSidebarMode("editor")}
@@ -112,7 +111,6 @@ export function Sidebar() {
               : "text-text-secondary hover:text-text-primary hover:bg-white/5",
           )}
         >
-          <Code className="w-4 h-4" />
           Editor
         </button>
         <button
@@ -124,7 +122,6 @@ export function Sidebar() {
               : "text-text-secondary hover:text-text-primary hover:bg-white/5",
           )}
         >
-          <ShieldCheck className="w-4 h-4" />
           Validasi
           {/* Badge for issues */}
           {totalIssues > 0 && (
